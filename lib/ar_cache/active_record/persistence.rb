@@ -2,7 +2,7 @@
 
 module ArCache
   module ActiveRecord
-    module Persistence
+    module Persistence # :nodoc: all
       # def reload(...) ... only support ruby 2.7+
       def reload(options = nil)
         ArCache::Model.get(self.class).delete(self)

@@ -3,7 +3,7 @@
 module ArCache
   module ActiveRecord
     module ConnectionAdapters
-      module DatabaseStatements
+      module DatabaseStatements # :nodoc: all
         # def update(sql, ...) ... only support ruby 2.7+
         # def execute(sql, name = nil)
         #   super.tap { ArCache::Monitor.match_update_version(sql) }

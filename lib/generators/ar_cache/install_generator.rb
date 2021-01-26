@@ -3,7 +3,7 @@
 require 'rails/generators'
 
 module ArCache
-  module Generators
+  module Generators # :nodoc: all
     class InstallGenerator < Rails::Generators::Base
       def create_initializer_file
         create_file "db/migrate/#{Time.now.to_i}_create_ar_cache_monitors.rb", <<-RUBY.strip_heredoc

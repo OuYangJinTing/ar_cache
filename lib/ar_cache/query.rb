@@ -14,13 +14,10 @@ module ArCache
 
       if single_query?
         record = model.read_record(where_values_hash, @index, @select_values, &block)
-        if record
-          records = [record]
-        else
-          records = relation.find_by_sql(relation.arel, &block).tap { |rs| model.write(*rs) }
-        end
+        records = record ? [record] : relation.find_by_sql(relation.arel, &block).tap { |rs| model.write(*rs) }
       else
-        records, missed_value = model.read_multi_records(where_values_hash, @index, @select_values, @multi_values_key, &block)
+        records, missed_value = model.read_multi_records(where_values_hash, @index, @select_values, @multi_values_key,
+                                                         &block)
         unless missed_value.nil?
           arel = relation.rewhere(@multi_values_key => missed_value).arel
           records += relation.find_by_sql(arel, &block).tap { |rs| model.write(*rs) }
@@ -31,7 +28,7 @@ module ArCache
       records.tap { reset }
     end
 
-    private def exec_queries_cacheable?
+    private def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return false if model.disabled?
 
       # ActiveRecord::Relation::VALUE_METHODS is cacheable?
@@ -53,7 +50,7 @@ module ArCache
       relation.left_outer_joins_values.empty? || relation.left_outer_joins_values.one?
     end
 
-    private def where_clause_cacheable?
+    private def where_clause_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return false if predicates.empty?
       return false if where_values_hash.length != predicates.length
 
@@ -92,7 +89,7 @@ module ArCache
       (@select_values - relation.klass.column_names).empty?
     end
 
-    private def order_values_cacheable?
+    private def order_values_cacheable? # rubocop:disable Metrics/CyclomaticComplexity
       return true if single_query?
 
       size = relation.order_values.size
@@ -100,14 +97,14 @@ module ArCache
       return false if size > 1
 
       first_order_value = relation.order_values.first
-
-      if first_order_value.is_a?(Arel::Nodes::Ordering)
+      case first_order_value
+      when Arel::Nodes::Ordering
         return false unless relation.klass.column_names.include?(first_order_value.expr.name)
 
         @order_name = first_order_value.expr.name
         @order_desc = first_order_value.descending?
         return true
-      elsif first_order_value.is_a?(String)
+      when String
         @order_name, @order_desc = first_order_value.downcase.split
         return false unless relation.klass.column_names.include?(@order_name)
 

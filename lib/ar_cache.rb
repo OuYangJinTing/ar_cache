@@ -25,10 +25,13 @@ require 'ar_cache/log_subscriber'
 
 require_relative './generators/ar_cache/install_generator' if defined?(Rails)
 
-module ArCache
+module ArCache # :nodoc: all
   class Error < StandardError; end
+
   class ArgumentError < Error; end
+
   class StiError < Error; end
+
   class SqlOperationError < Error; end
 
   class << self

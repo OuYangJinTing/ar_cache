@@ -2,7 +2,7 @@
 
 # env set
 module ArCache
-  class Configuration
+  class Configuration # :nodoc: all
     class << self
       attr_reader :cache_store
       attr_writer :env
@@ -22,6 +22,7 @@ module ArCache
       def models_options=(options)
         options.each do |model, hash|
           raise ArgumentError, "The #{model.inspect} must be Symbol type" unless model.is_a?(Symbol)
+
           hash.assert_valid_keys(ArCache::Model::OPTIONS)
         end
 
@@ -64,10 +65,10 @@ module ArCache
       end
     end
 
-    if defined?(Rails) && Rails.cache.is_a?(ActiveSupport::Cache::Store)
-      self.cache_store = Rails.cache
-    else
-      self.cache_store = ActiveSupport::Cache::MemoryStore.new
-    end
+    self.cache_store = if defined?(Rails) && Rails.cache.is_a?(ActiveSupport::Cache::Store)
+                         Rails.cache
+                       else
+                         ActiveSupport::Cache::MemoryStore.new
+                       end
   end
 end

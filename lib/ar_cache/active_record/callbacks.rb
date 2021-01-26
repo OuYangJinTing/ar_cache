@@ -2,7 +2,7 @@
 
 module ArCache
   module ActiveRecord
-    module Callbacks
+    module Callbacks # :nodoc: all
       extend ActiveSupport::Concern
 
       included do

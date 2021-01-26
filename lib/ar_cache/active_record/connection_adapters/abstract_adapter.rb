@@ -3,7 +3,7 @@
 module ArCache
   module ActiveRecord
     module ConnectionAdapters
-      module AbstractAdapter
+      module AbstractAdapter # :nodoc: all
         module RawConnection
           def skip_update_ar_cache_model_version
             @skip_update_ar_cache_model_version = true

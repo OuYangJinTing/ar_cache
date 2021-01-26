@@ -13,8 +13,8 @@ ActiveSupport.on_load(:active_record, run_once: true) do
   ActiveRecord::CounterCache::ClassMethods.prepend(ArCache::ActiveRecord::CounterCache::ClassMethods)
 
   ActiveRecord::Associations::HasOneAssociation.prepend(ArCache::ActiveRecord::Associations::HasOneAssociation)
-  ActiveRecord::Associations::HasOneThroughAssociation.prepend(ArCache::ActiveRecord::Associations::HasOneThroughAssociation)
+  ActiveRecord::Associations::HasOneThroughAssociation.prepend(ArCache::ActiveRecord::Associations::HasOneThroughAssociation) # rubocop:disable Layout/LineLength
 
   ActiveRecord::ConnectionAdapters::AbstractAdapter.prepend(ArCache::ActiveRecord::ConnectionAdapters::AbstractAdapter)
-  ActiveRecord::ConnectionAdapters::DatabaseStatements.prepend(ArCache::ActiveRecord::ConnectionAdapters::DatabaseStatements)
+  ActiveRecord::ConnectionAdapters::DatabaseStatements.prepend(ArCache::ActiveRecord::ConnectionAdapters::DatabaseStatements) # rubocop:disable Layout/LineLength
 end

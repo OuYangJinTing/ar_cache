@@ -52,7 +52,7 @@ module ArCache
       instantiate(entry, &block)
     end
 
-    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block)
+    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       records = []
       missed_values = []
       cache_keys_hash = {}
@@ -82,6 +82,7 @@ module ArCache
 
       entries_hash.each do |key, entry|
         missed_values << cache_keys_hash[key] and next unless assert_correct_entry?(entry, where_values_hash)
+
         entry = entry.slice(*select_values) if select_values
         records << instantiate(entry, &block)
       end

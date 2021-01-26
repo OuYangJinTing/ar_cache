@@ -4,7 +4,7 @@ module ArCache
   module ActiveRecord
     module Associations
       module HasOneThroughAssociation
-        private def find_target
+        private def find_target # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
           return super if ArCache::Model.get(reflection.klass).disabled?
           return super if ArCache::Model.get(reflection.source_reflection.active_record).disabled?
 

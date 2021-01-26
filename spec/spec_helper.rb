@@ -23,7 +23,7 @@ ActiveRecord::Base.logger = Logger.new($stdout) if ENV['DEBUG']
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
 ArCache::Configuration.configure do |config|
-
+  # ...
 end
 
 require 'models/application_record'

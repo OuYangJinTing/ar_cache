@@ -11,8 +11,8 @@ ActiveRecord::Base.connection.create_table(:users, force: :cascade) do |t|
 
   t.timestamps null: false
 
-  t.index :email,           unique: true
-  t.index [:name, :status], unique: true
+  t.index :email, unique: true
+  t.index %i[name status], unique: true
 end
 
 class User < ApplicationRecord

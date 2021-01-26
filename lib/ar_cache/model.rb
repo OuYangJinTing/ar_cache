@@ -21,7 +21,8 @@ module ArCache
     # if SubClass need columns is in BaseClass ignored columns, read cache will be incomplete.
     def self.validation_sti!(klass)
       return if klass.ignored_columns.empty?
-      subclass = klass.descendants.find { |subclass| (klass.ignored_columns - subclass.ignored_columns).any? }
+
+      subclass = klass.descendants.find { |sub| (klass.ignored_columns - sub.ignored_columns).any? }
       return unless subclass
 
       raise StiError, <<-MSG.strip_heredoc
@@ -40,8 +41,7 @@ module ArCache
       MSG
     end
 
-    attr_reader :klass, :version
-    attr_reader *OPTIONS
+    attr_reader :klass, :version, *OPTIONS
 
     def initialize(klass)
       @klass = klass
@@ -84,7 +84,7 @@ module ArCache
       return primary_cache_key(key_value || where_values_hash[klass.primary_key]) if index == klass.primary_key
 
       digest = index.map do |column|
-        value = (column == multi_values_key) ? key_value : where_values_hash[column]
+        value = column == multi_values_key ? key_value : where_values_hash[column]
         value = Digest::SHA1.hexdigest(value).first(7) if value.respond_to?(:size) && value.size > 40
         "#{column}=#{value}"
       end.sort.join('&') # The called #sort avoid key is inconsistent caused by order
@@ -96,12 +96,12 @@ module ArCache
       if previous
         changes = record.previous_changes
         columns.each_with_object({}) do |column, attributes|
-          if changes.key?(column)
-            attributes[column] = record.instance_variable_get(:@attributes)
+          attributes[column] = if changes.key?(column)
+                                 record.instance_variable_get(:@attributes)
                                        .send(:attributes)[column].type.serialize(values.first)
-          else
-            attributes[column] = record.send(:attribute_for_database, column)
-          end
+                               else
+                                 record.send(:attribute_for_database, column)
+                               end
         end
       else
         columns.each_with_object({}) do |column, attributes|
@@ -126,24 +126,25 @@ module ArCache
       ArCache::Monitor.activate(self)
     end
 
-    private def configure_unique_indexes(unique_indexes)
-      if unique_indexes
-        @unique_indexes = Array.wrap(unique_indexes).map do |index|
-          Array.wrap(index).map do |column|
-            column = column.to_s.tap do |name|
-              unless klass.column_names.include?(name)
-                raise ArgumentError, "The #{column.inspect} is not in #{klass.name}.column_names"
-              end
-            end
-          end.uniq
-        end.uniq
-      else
-        @unique_indexes = ::ActiveRecord::Base.connection.indexes(klass.table_name).map do |index|
-          next unless index.unique
-          next if index.columns.any? { |column| klass.columns_hash[column].null }
-          index.columns
-        end.compact
-      end
+    private def configure_unique_indexes(unique_indexes) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      @unique_indexes = if unique_indexes
+                          Array.wrap(unique_indexes).map do |index|
+                            Array.wrap(index).map do |column|
+                              column = column.to_s.tap do |name|
+                                unless klass.column_names.include?(name)
+                                  raise ArgumentError, "The #{column.inspect} is not in #{klass.name}.column_names"
+                                end
+                              end
+                            end.uniq
+                          end.uniq
+                        else
+                          ::ActiveRecord::Base.connection.indexes(klass.table_name).map do |index|
+                            next unless index.unique
+                            next if index.columns.any? { |column| klass.columns_hash[column].null }
+
+                            index.columns
+                          end.compact
+                        end
 
       @unique_indexes = (@unique_indexes - [klass.primary_key]).sort_by(&:size).freeze
     end

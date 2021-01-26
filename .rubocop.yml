@@ -9,6 +9,14 @@ Metrics/BlockLength:
 Metrics/AbcSize:
   Enabled: false
 
+Metrics/ClassLength:
+  Enabled: true
+  Max: 500
+
+Metrics/MethodLength:
+  Enabled: true
+  Max: 30
+
 Lint/NestedMethodDefinition:
   Enabled: false
 

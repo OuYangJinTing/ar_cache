@@ -17,7 +17,7 @@ module ArCache
       monitor = get(model.klass.table_name) || new(table_name: model.klass.table_name)
 
       if monitor.disabled? != model.disabled?
-          !monitor.unique_indexes.all? { |index| model.unique_indexes.include?(index) } ||
+        !monitor.unique_indexes.all? { |index| model.unique_indexes.include?(index) } ||
           !monitor.ignored_columns.all? { |column| model.klass.ignored_columns.include?(column) }
 
         monitor.version = Time.now.to_i
@@ -34,9 +34,10 @@ module ArCache
     def self.extract_table_from_sql(sql, type)
       sql = sql.downcase.split.join(' ') # Remove Newline and multiple consecutive spaces
 
-      if type === :update
+      case type
+      when :update
         sql.match(/^update.*(#{tables.join('|')}).*set/i).try(:[], 1)
-      elsif type === :delete
+      when :delete
         sql.match(/^delete.*from.*(#{tables.join('|')})/i).try(:[], 1)
       else
         raise SqlOperationError, "Unrecognized sql operation: #{sql}"
@@ -53,7 +54,7 @@ module ArCache
     end
 
     def match_update_version(sql)
-      # TODO:
+      # TODO: ...
     end
   end
 end
