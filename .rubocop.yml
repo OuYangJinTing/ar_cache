@@ -15,7 +15,7 @@ Metrics/ClassLength:
 
 Metrics/MethodLength:
   Enabled: true
-  Max: 30
+  Max: 25
 
 Lint/NestedMethodDefinition:
   Enabled: false

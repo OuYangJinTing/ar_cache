@@ -52,7 +52,7 @@ module ArCache
       instantiate(entry, &block)
     end
 
-    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/CyclomaticComplexity
       records = []
       missed_values = []
       cache_keys_hash = {}
