@@ -11,10 +11,11 @@ gem 'sqlite3'
 gem 'database_cleaner'
 
 gem 'rubocop'
-gem 'rubocop-rspec'
 gem 'rubocop-rake'
+gem 'rubocop-minitest'
 gem 'rubocop-performance'
 
-gem 'rspec'
+gem 'minitest'
+gem 'minitest-reporters'
 
 gem 'pry'
