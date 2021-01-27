@@ -10,13 +10,13 @@ module ArCache
     end
 
     def write(*records)
-      return unless klass.column_names == records.first&.attribute_names
+      return unless column_names == records.first&.attribute_names
       return unless records.first&.id?
 
       records_attributes = records.each_with_object({}) do |record, hash|
-        attributes = attributes_for_database(record, klass.column_names)
+        attributes = attributes_for_database(record, column_names)
 
-        primary_cache_key = cache_key(attributes, klass.primary_key)
+        primary_cache_key = cache_key(attributes, primary_key)
         hash[primary_cache_key] = attributes
 
         unique_indexes.each { |index| hash[cache_key(attributes, index)] = primary_cache_key }
@@ -29,7 +29,7 @@ module ArCache
       cache_keys = records.each_with_object([]) do |record, keys|
         attributes = attributes_for_database(record, index_columns, previous: previous)
 
-        keys << cache_key(attributes, klass.primary_key)
+        keys << cache_key(attributes, primary_key)
         unique_indexes.each { |index| keys << cache_key(attributes, index) }
       end
 

@@ -13,12 +13,12 @@ module ArCache
             def change
               create_table :ar_cache_monitors do |t|
                 t.string  :table_name, null: false
-                t.integer :version, null: false, limit: 10
+                t.string  :version, null: false
                 t.boolean :disabled
                 t.string  :unique_indexes, limit: 1000
                 t.string  :ignored_columns, limit: 1000
 
-                t.index   :table_name, unique: true, name: 'index_ar_cache_monitors_on_table'
+                t.index   :table_name, unique: true
               end
             end
           end
@@ -42,17 +42,14 @@ module ArCache
             #   expires_in: Numeric
             # }
 
-            config.models_options = {
-              # table_name: {
-              #   disabled: Boolean, # Optional, default enabled ArCache
-              #   cache_key_prefix: String,
-              #   expires_in: Numeric,
-              #   unique_indexes: Array # The primary key is used by default
-              # }
-              ar_cache_monitors: {
-                disabled: true
-              }
-            }
+            # config.models_options = {
+            #   table_name: {
+            #     disabled: Boolean, # Optional, default enabled ArCache
+            #     cache_key_prefix: String,
+            #     expires_in: Numeric,
+            #     unique_indexes: Array # The primary key is used by default
+            #   }
+            # }
           end
         RUBY
       end

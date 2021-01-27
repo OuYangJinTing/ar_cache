@@ -8,6 +8,7 @@ ActiveRecord::Base.connection.create_table(:users, force: :cascade) do |t|
   t.integer :books_count,  null: false, default: 0
   t.integer :images_count, null: false, default: 0
   t.text    :interest
+  t.text    :useless
 
   t.timestamps null: false
 
@@ -16,6 +17,8 @@ ActiveRecord::Base.connection.create_table(:users, force: :cascade) do |t|
 end
 
 class User < ApplicationRecord
+  self.ignored_columns = [:useless]
+
   enum status: %i[active archived]
   serialize :interest, Array, default: []
 

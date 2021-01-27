@@ -38,6 +38,11 @@ module ArCache
         @default_model_options = options.freeze
       end
 
+      def get_model_options(table_name)
+        options = models_options[table_name.to_sym] || {}
+        default_model_options.merge(options)
+      end
+
       def cache_store=(cache_store)
         unless cache_store.is_a?(ActiveSupport::Cache::Store)
           raise ArgumentError, 'The cache_store must be ActiveSupport::Cache::Store object'

@@ -13,32 +13,33 @@ module ArCache
       find_by(table_name: table_name)
     end
 
-    def self.activate(model)
-      monitor = get(model.klass.table_name) || new(table_name: model.klass.table_name)
+    def self.activate(model) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      monitor = get(model.table_name) || new(table_name: model.table_name)
 
-      if monitor.disabled? != model.disabled?
-        !monitor.unique_indexes.all? { |index| model.unique_indexes.include?(index) } ||
-          !monitor.ignored_columns.all? { |column| model.klass.ignored_columns.include?(column) }
+      if monitor.version.blank? ||
+         !!monitor.disabled != !!model.disabled ||
+         !monitor.unique_indexes.all? { |index| model.unique_indexes.include?(index) } ||
+         !monitor.ignored_columns.all? { |column| model.ignored_columns.include?(column) }
 
-        monitor.version = Time.now.to_i
+        monitor.update_version
       end
 
       monitor.disabled = model.disabled?
       monitor.unique_indexes = model.unique_indexes
-      monitor.ignored_columns = model.klass.ignored_columns
+      monitor.ignored_columns = model.ignored_columns
       monitor.save! if monitor.changed?
-
-      model.update_version(monitor.version)
+      monitor
     end
 
     def self.extract_table_from_sql(sql, type)
-      sql = sql.downcase.split.join(' ') # Remove Newline and multiple consecutive spaces
+      sql = sql.downcase.split.join(' ') # Remove Newline
+      table_names = ::ActiveRecord::Base.descendants.map(&:table_name).compact
 
       case type
       when :update
-        sql.match(/^update.*(#{tables.join('|')}).*set/i).try(:[], 1)
+        sql.match(/^update.*(#{table_names.join('|')}).*set/i).try(:[], 1)
       when :delete
-        sql.match(/^delete.*from.*(#{tables.join('|')})/i).try(:[], 1)
+        sql.match(/^delete.*from.*(#{table_names.join('|')})/i).try(:[], 1)
       else
         raise SqlOperationError, "Unrecognized sql operation: #{sql}"
       end
@@ -48,13 +49,17 @@ module ArCache
       monitor = get(table_name)
       return unless monitor
 
-      monitor.version = Time.now.to_i
+      monitor.update_version
       monitor.save!
       ArCache::Model.get(table_name).update_version(monitor.version)
     end
 
-    def match_update_version(sql)
-      # TODO: ...
+    # TODO
+    # def match_update_version(sql)
+    # end
+
+    def update_version
+      self.version = Time.now.to_f
     end
   end
 end

@@ -6,17 +6,9 @@ module ArCache
       extend ActiveSupport::Concern
 
       included do
-        after_commit(on: :create, prepend: true) do
-          ArCache::Model.get(self.class).tap { |model| model.write(self) unless model.disabled? }
-        end
-
-        after_commit(on: :update, prepend: true) do
-          ArCache::Model.get(self.class).tap { |model| model.update(self) unless model.disabled? }
-        end
-
-        after_commit(on: :destroy, prepend: true) do
-          ArCache::Model.get(self.class).tap { |model| model.delete(self) unless model.disabled? }
-        end
+        after_commit(on: :create, prepend: true) { ArCache::Model.get(self.class).write(self) }
+        after_commit(on: :update, prepend: true) { ArCache::Model.get(self.class).update(self) }
+        after_commit(on: :destroy, prepend: true) { ArCache::Model.get(self.class).delete(self) }
       end
     end
   end

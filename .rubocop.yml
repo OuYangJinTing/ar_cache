@@ -11,7 +11,11 @@ Metrics/AbcSize:
 
 Metrics/ClassLength:
   Enabled: true
-  Max: 500
+  Max: 300
+
+Metrics/ModuleLength:
+  Enabled: true
+  Max: 300
 
 Metrics/MethodLength:
   Enabled: true
