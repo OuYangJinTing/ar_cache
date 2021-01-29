@@ -18,9 +18,7 @@ GEM
       minitest (>= 5.1)
       tzinfo (~> 2.0)
       zeitwerk (~> 2.3)
-    ansi (1.5.0)
     ast (2.4.1)
-    builder (3.2.4)
     coderay (1.1.3)
     concurrent-ruby (1.1.7)
     database_cleaner (1.8.5)
@@ -28,11 +26,6 @@ GEM
       concurrent-ruby (~> 1.0)
     method_source (1.0.0)
     minitest (5.14.2)
-    minitest-reporters (1.4.2)
-      ansi
-      builder
-      minitest (>= 5.0)
-      ruby-progressbar
     parallel (1.20.1)
     parser (3.0.0.0)
       ast (~> 2.4.1)
@@ -75,7 +68,6 @@ DEPENDENCIES
   ar_cache!
   database_cleaner
   minitest
-  minitest-reporters
   pry
   rake
   rubocop

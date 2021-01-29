@@ -16,6 +16,5 @@ gem 'rubocop-minitest'
 gem 'rubocop-performance'
 
 gem 'minitest'
-gem 'minitest-reporters'
 
 gem 'pry'

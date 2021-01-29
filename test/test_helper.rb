@@ -7,9 +7,7 @@ require 'ar_cache'
 require 'sqlite3'
 require 'database_cleaner'
 require 'minitest/autorun'
-require 'minitest/reporters'
-
-Minitest::Reporters.use!
+require 'minitest/pride'
 
 module Minitest
   class Test
