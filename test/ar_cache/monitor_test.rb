@@ -7,28 +7,6 @@ module ArCache
     let(:monitor) { ArCache::Monitor.new }
     let(:user_model) { ArCache::Model.get(User) }
 
-    describe '.attributes method' do
-      it '.table_name' do
-        assert_respond_to monitor, :table_name
-      end
-
-      it '.version' do
-        assert_respond_to monitor, :version
-      end
-
-      it '.disabled' do
-        assert_respond_to monitor, :disabled
-      end
-
-      it '.unique_indexes' do
-        assert_respond_to monitor, :unique_indexes
-      end
-
-      it '.ignored_columns' do
-        assert_respond_to monitor, :ignored_columns
-      end
-    end
-
     describe '#default_scope' do
       it 'default call skip_ar_cache' do
         assert Monitor.all.instance_variable_get(:@skip_ar_cache)
@@ -136,22 +114,34 @@ module ArCache
       end
     end
 
-    it '#update_version' do
-      old_user_model_version   = user_model.version
-      old_user_monitor_version = ArCache::Monitor.get(user_model.table_name).version
-      assert_equal old_user_monitor_version, old_user_model_version
+    describe '#update_version' do
+      it 'model.version should equal monitor.version' do
+        ArCache::Monitor.update_version(user_model.table_name)
 
-      ArCache::Monitor.update_version(user_model.table_name)
-
-      new_user_model_version   = ArCache::Model.get(User).version
-      new_user_monitor_version = ArCache::Monitor.get(user_model.table_name).version
-      assert_equal new_user_monitor_version, new_user_model_version
-
-      assert_not_equal old_user_monitor_version, new_user_monitor_version
-      assert_not_equal old_user_model_version, new_user_model_version
+        assert_equal ArCache::Model.get(User).version, ArCache::Monitor.get(user_model.table_name).version
+      end
     end
 
-    it '.update_version' do
+    describe '.attributes method' do
+      it '.table_name' do
+        assert_respond_to monitor, :table_name
+      end
+
+      it '.version' do
+        assert_respond_to monitor, :version
+      end
+
+      it '.disabled' do
+        assert_respond_to monitor, :disabled
+      end
+
+      it '.unique_indexes' do
+        assert_respond_to monitor, :unique_indexes
+      end
+
+      it '.ignored_columns' do
+        assert_respond_to monitor, :ignored_columns
+      end
     end
   end
 end

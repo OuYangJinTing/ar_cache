@@ -54,9 +54,9 @@ module ArCache
       ArCache::Model.get(table_name).update_version(monitor.version)
     end
 
-    # TODO
-    # def match_update_version(sql)
-    # end
+    def self.match_update_version(sql)
+      # TODO
+    end
 
     def update_version
       self.version = Time.now.to_f
