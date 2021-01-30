@@ -6,7 +6,7 @@ describe ArCacheHelper do
   let(:user_model) { ArCache::Model.get(User) }
 
   it '#with_reset_model' do
-    refute(user_model.unique_indexes.any? { |index| index == ['created_at'] })
+    assert_not(user_model.unique_indexes.any? { |index| index == ['created_at'] })
     assert_not_includes User.ignored_columns, 'role'
 
     options = {

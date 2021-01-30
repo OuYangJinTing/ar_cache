@@ -103,19 +103,14 @@ module ArCache
     end
 
     def attributes_for_database(record, columns, previous: false)
-      if previous
-        changes = record.previous_changes
-        columns.each_with_object({}) do |column, attributes|
-          attributes[column] = if changes.key?(column)
-                                 record.instance_variable_get(:@attributes)
-                                       .send(:attributes)[column].type.serialize(values.first)
-                               else
-                                 record.send(:attribute_for_database, column)
-                               end
-        end
-      else
-        columns.each_with_object({}) do |column, attributes|
-          attributes[column] = record.send(:attribute_for_database, column)
+      return columns.index_with { |column| record.send(:attribute_for_database, column) } unless previous
+
+      changes = record.previous_changes
+      columns.index_with do |column|
+        if changes.key?(column)
+          record.instance_variable_get(:@attributes).send(:attributes)[column].type.serialize(values.first)
+        else
+          record.send(:attribute_for_database, column)
         end
       end
     end

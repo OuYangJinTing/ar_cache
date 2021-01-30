@@ -10,6 +10,7 @@ gem 'database_cleaner'
 
 gem 'rubocop'
 gem 'rubocop-rake'
+gem 'rubocop-rails'
 gem 'rubocop-minitest'
 gem 'rubocop-performance'
 

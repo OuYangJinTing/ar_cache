@@ -24,6 +24,6 @@ module ArCache # :nodoc: all
   class SqlOperationError < Error; end
 
   class << self
-    delegate :env, :cache_store, to: Configuration
+    delegate :env, :configure, :cache_store, to: Configuration
   end
 end

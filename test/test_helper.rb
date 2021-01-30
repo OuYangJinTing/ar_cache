@@ -9,8 +9,17 @@ require 'database_cleaner'
 require 'minitest/autorun'
 require 'minitest/pride'
 
+# Use rails style test
+require 'active_support/testing/assertions'
+require 'active_support/testing/method_call_assertions'
+require 'rails/generators/testing/assertions'
+
 module Minitest
   class Test
+    include ActiveSupport::Testing::Assertions
+    include ActiveSupport::Testing::MethodCallAssertions
+    include Rails::Generators::Testing::Assertions
+
     # These is copy from ActiveSupport::TestCase
     alias assert_raise           assert_raises
     alias assert_not_empty       refute_empty
@@ -46,7 +55,7 @@ module ActiveRecord
   end
 end
 
-ArCache::Configuration.configure do |config|
+ArCache.configure do |config|
   # ...
 end
 

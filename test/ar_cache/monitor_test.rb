@@ -31,7 +31,7 @@ module ArCache
         end
 
         it 'when model.unique_indexes include monitor.unique_indexes' do
-          refute(user_model.unique_indexes.any? { |index| index == ['created_at'] })
+          assert_not(user_model.unique_indexes.any? { |index| index == ['created_at'] })
 
           last_verion = Monitor.get(user_model.table_name).version
 

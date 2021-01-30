@@ -1,6 +1,7 @@
 require:
   - rubocop-performance
   - rubocop-minitest
+  - rubocop-rails
   - rubocop-rake
 
 Metrics/BlockLength:
