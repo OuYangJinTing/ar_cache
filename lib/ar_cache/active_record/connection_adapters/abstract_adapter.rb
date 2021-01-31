@@ -4,28 +4,35 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module AbstractAdapter # :nodoc: all
-        module RawConnection
-          def skip_update_ar_cache_model_version
-            @skip_update_ar_cache_model_version = true
+        module Connection
+          def disable_update_ar_cache_version
+            @update_ar_cache_version = false
           end
 
-          def skip_update_ar_cache_model_version?
-            @skip_update_ar_cache_model_version
+          def disable_update_ar_cache_version?
+            !@update_ar_cache_version
           end
 
-          def cancel_update_ar_cache_model_version
-            @skip_update_ar_cache_model_version = false
+          def enable_update_ar_cache_version
+            @update_ar_cache_version = true
+          end
+
+          def enable_update_ar_cache_version?
+            @update_ar_cache_version
           end
         end
 
-        delegate :skip_update_ar_cache_model_version?,
-                 :skip_update_ar_cache_model_version,
-                 :cancel_update_ar_cache_model_version,
+        delegate :disable_update_ar_cache_version, :disable_update_ar_cache_version?,
+                 :enable_update_ar_cache_version, :enable_update_ar_cache_version?,
                  to: :@connection
 
         # def initialize(connection, ...) ... only support ruby 2.7+
         def initialize(connection, logger = nil, config = {})
-          connection.class.include(RawConnection) unless connection.respond_to?(:skip_update_ar_cache_model_version)
+          unless connection.respond_to?(:enable_update_ar_cache_version)
+            connection.class.include(Connection)
+            connection.enable_update_ar_cache_version
+          end
+
           super
         end
       end
