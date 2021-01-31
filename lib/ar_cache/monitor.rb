@@ -4,62 +4,71 @@ module ArCache
   class Monitor < ::ActiveRecord::Base # :nodoc: all
     self.table_name = 'ar_cache_monitors'
 
-    serialize :unique_indexes, Array, default: []
+    serialize :unique_indexes,  Array, default: []
     serialize :ignored_columns, Array, default: []
 
     default_scope { skip_ar_cache }
 
-    def self.get(table_name)
-      find_by(table_name: table_name)
-    end
-
-    def self.activate(model) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-      monitor = get(model.table_name) || new(table_name: model.table_name)
-
-      if monitor.version.blank? ||
-         !!monitor.disabled != !!model.disabled ||
-         !monitor.unique_indexes.all? { |index| model.unique_indexes.include?(index) } ||
-         !monitor.ignored_columns.all? { |column| model.ignored_columns.include?(column) }
-
-        monitor.update_version
+    class << self
+      def get(table_name)
+        find_by(table_name: table_name)
       end
 
-      monitor.disabled = model.disabled?
-      monitor.unique_indexes = model.unique_indexes
-      monitor.ignored_columns = model.ignored_columns
-      monitor.save! if monitor.changed?
-      monitor
-    end
+      def extract_table_from_sql(sql, type)
+        sql = sql.downcase.split.join(' ') # Remove Newline
+        table_names = ::ActiveRecord::Base.descendants.map(&:table_name).compact
 
-    def self.extract_table_from_sql(sql, type)
-      sql = sql.downcase.split.join(' ') # Remove Newline
-      table_names = ::ActiveRecord::Base.descendants.map(&:table_name).compact
+        case type
+        when :update
+          sql.match(/^update.*(#{table_names.join('|')}).*set/).try(:[], 1)
+        when :delete
+          sql.match(/^delete.*from.*(#{table_names.join('|')})/).try(:[], 1)
+        else
+          raise SqlOperationError, "Unrecognized sql operation: #{sql}"
+        end
+      end
 
-      case type
-      when :update
-        sql.match(/^update.*(#{table_names.join('|')}).*set/i).try(:[], 1)
-      when :delete
-        sql.match(/^delete.*from.*(#{table_names.join('|')})/i).try(:[], 1)
-      else
-        raise SqlOperationError, "Unrecognized sql operation: #{sql}"
+      def activate(model)
+        monitor = get(model.table_name) || new(table_name: model.table_name)
+        monitor.activate(model)
+        monitor
+      end
+
+      def update_version(table_name)
+        get(table_name)&.update_version if table_name.present?
       end
     end
 
-    def self.update_version(table_name)
-      monitor = get(table_name)
-      return unless monitor
+    def activate(model)
+      with_optimistic_retry do
+        if disabled != model.disabled ||
+            unique_indexes.any? { |index| model.unique_indexes.exclude?(index) } ||
+            ignored_columns.any? { |column| model.ignored_columns.exclude?(column) }
 
-      monitor.update_version
-      monitor.save!
-      ArCache::Model.get(table_name).update_version(monitor.version)
-    end
+          increment('version')
+        end
 
-    def self.match_update_version(sql)
-      # TODO
+        self.disabled = model.disabled
+        self.unique_indexes = model.unique_indexes
+        self.ignored_columns = model.ignored_columns
+        save! if changed?
+      end
     end
 
     def update_version
-      self.version = Time.now.to_f
+      with_optimistic_retry do
+        increment('version')
+        save!
+      end
+
+      ArCache::Model.get(table_name).update_version(version)
+    end
+
+    def with_optimistic_retry
+      yield
+    rescue ::ActiveRecord::StaleObjectError
+      reload
+      retry
     end
   end
 end

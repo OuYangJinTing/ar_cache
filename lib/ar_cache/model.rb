@@ -52,9 +52,9 @@ module ArCache
       @klass = klass
 
       normalize_unique_indexes(options[:unique_indexes])
-      @disabled = !!options[:disabled] if options.key?(:disabled)
+      @disabled = !!options[:disabled]
       @disabled = false if klass == ArCache::Monitor # ArCache::Monitor force disabled
-      @expires_in = options[:expires_in].to_i if options.key?(:expires_in)
+      @expires_in = options[:expires_in].to_i
       @cache_key_prefix = options[:cache_key_prefix].to_s
       @version = ArCache::Monitor.activate(self).version
 

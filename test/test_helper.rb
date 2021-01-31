@@ -59,10 +59,21 @@ ArCache.configure do |config|
   # ...
 end
 
+# TODO: Auto perform lib/generators/ar_cache/templates/migrate/create_ar_cache_monitors.rb.tt
+ActiveRecord::Base.connection.create_table(:ar_cache_monitors, force: :cascade) do |t|
+  t.string  :table_name,      null: false
+  t.integer :version,         null: false, default: 0
+  t.integer :lock_version,    null: false, default: 0
+  t.boolean :disabled,        null: false, default: false
+  t.string  :unique_indexes,  limit: 1000
+  t.string  :ignored_columns, limit: 1000
+
+  t.index   :table_name, unique: true
+end
+
 require 'support/ar_cache_helper'
 
 require 'models/application_record'
-require 'models/ar_cache/monitor'
 require 'models/user'
 require 'models/book'
 require 'models/animal'
