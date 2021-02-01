@@ -3,14 +3,14 @@
 class CreateArCacheMonitors < ActiveRecord::Migration[<%= ActiveRecord::VERSION::MAJOR %>.<%= ActiveRecord::VERSION::MINOR %>]
   def change
     create_table :ar_cache_monitors do |t|
-        t.string  :table_name,      null: false
-        t.integer :version,         null: false, default: 0
-        t.integer :lock_version,    null: false, default: 0
-        t.boolean :disabled,        null: false, default: false
-        t.string  :unique_indexes,  limit: 1000
-        t.string  :ignored_columns, limit: 1000
+      t.string  :table_name,      null: false
+      t.integer :version,         null: false, default: 0
+      t.integer :lock_version,    null: false, default: 0
+      t.boolean :disabled,        null: false, default: false
+      t.string  :unique_indexes,  limit: 1000
+      t.string  :ignored_columns, limit: 1000
 
-        t.index   :table_name, unique: true
+      t.index   :table_name, unique: true
     end
   end
 end

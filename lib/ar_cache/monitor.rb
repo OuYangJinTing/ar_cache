@@ -42,8 +42,8 @@ module ArCache
     def activate(model)
       with_optimistic_retry do
         if disabled != model.disabled ||
-            unique_indexes.any? { |index| model.unique_indexes.exclude?(index) } ||
-            ignored_columns.any? { |column| model.ignored_columns.exclude?(column) }
+           unique_indexes.any? { |index| model.unique_indexes.exclude?(index) } ||
+           ignored_columns.any? { |column| model.ignored_columns.exclude?(column) }
 
           increment('version')
         end
