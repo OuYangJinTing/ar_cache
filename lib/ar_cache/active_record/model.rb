@@ -36,17 +36,18 @@ module ArCache
 
         def ar_cache_model
           return build_ar_cache_model unless defined?(@ar_cache_model)
+
           @ar_cache_model
         end
 
         private def build_ar_cache_model
           @ar_cache_model = if abstract_class?
-            nil
-          elsif base_class?
-            ArCache::Model.new(self)
-          else # is subclass
-            base_class.ar_cache_model
-          end
+                              nil
+                            elsif base_class?
+                              ArCache::Model.new(self)
+                            else # is subclass
+                              base_class.ar_cache_model
+                            end
         end
       end
 

@@ -4,8 +4,11 @@ require:
   - rubocop-rails
   - rubocop-rake
 
+AllCops:
+  NewCops: enable
+
 Metrics/BlockLength:
-  Enabled: false
+  Enabled: true
 
 Metrics/AbcSize:
   Enabled: false
@@ -29,6 +32,9 @@ Style/AccessModifierDeclarations:
   Enabled: false
 
 Style/DoubleNegation:
+  Enabled: false
+
+Style/Documentation:
   Enabled: false
 
 Layout/LineLength:

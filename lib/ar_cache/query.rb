@@ -28,7 +28,7 @@ module ArCache
       records.tap { reset }
     end
 
-    private def exec_queries_cacheable?
+    private def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return false if relation.skip_query_cache_value
       return false if relation.group_values.any?
       return false if relation.joins_values.any?
@@ -43,7 +43,7 @@ module ArCache
       true
     end
 
-    private def where_clause_cacheable?
+    private def where_clause_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return false if predicates.empty?
       return false if where_values_hash.length != predicates.length
 
@@ -83,7 +83,7 @@ module ArCache
       (@select_values - relation.klass.column_names).empty?
     end
 
-    private def order_values_cacheable?
+    private def order_values_cacheable? # rubocop:disable Metrics/CyclomaticComplexity
       return true if single_query?
 
       size = relation.order_values.size

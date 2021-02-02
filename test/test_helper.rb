@@ -81,16 +81,15 @@ require 'models/book'
 require 'models/animal'
 require 'models/image'
 
-
 User.create(name: :ouyang1, email: :ouyang1)
 User.create(name: :ouyang2, email: :ouyang2)
 User.create(name: :ouyang3, email: :ouyang3)
 User.find(1).create_account(username: 1, password: 1)
 User.find(1).create_identity(num: 1)
 
-User.find(1,2,3)
+User.find(1, 2, 3)
 User.ar_cache_model.delete(User.find(3))
-User.where(name: [:ouyang1, :ouyang3], status: 0).to_a
+User.where(name: %i[ouyang1 ouyang3], status: 0).to_a
 User.includes(:account, :identity).where(id: 1).to_a
 User.find(1).account
 Account.find(1).user

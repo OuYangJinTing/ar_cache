@@ -7,7 +7,7 @@ module ArCache
         tap { @skip_ar_cache = true }
       end
 
-      private def exec_queries(&block)
+      private def exec_queries(&block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
         skip_query_cache_if_necessary do
           records = if where_clause.contradiction?
                       []

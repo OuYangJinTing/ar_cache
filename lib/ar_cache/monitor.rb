@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ArCache
-  class Monitor < ActiveRecord::Base
+  class Monitor < ActiveRecord::Base # rubocop:disable Rails/ApplicationRecord
     self.table_name = 'ar_cache_monitors'
 
     serialize :unique_indexes,  Array, default: []

@@ -45,6 +45,7 @@ module ArCache
 
     def update_version(version = nil)
       return if disabled?
+
       version ||= ArCache::Monitor.update_version(table_name)
       cache_store.write(version_cache_key, version, expires_in: 1.year)
     end
@@ -99,7 +100,7 @@ module ArCache
       klass.send(:instantiate_instance_of, klass, attributes, &block)
     end
 
-    private def normalize_unique_indexes(unique_indexes)
+    private def normalize_unique_indexes(unique_indexes) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       @unique_indexes = if unique_indexes
                           Array.wrap(unique_indexes).map do |index|
                             Array.wrap(index).map do |column|

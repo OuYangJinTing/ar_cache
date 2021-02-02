@@ -8,7 +8,7 @@ module ArCache
     # def update(*records)
     # end
 
-    def write(*records)
+    def write(*records) # rubocop:disable Metrics/CyclomaticComplexity
       return if disabled?
       return unless column_names == records.first&.attribute_names
       return unless records.first&.id?
@@ -27,6 +27,7 @@ module ArCache
 
     def delete(*records, previous: false)
       return if disabled?
+
       cache_keys = records.each_with_object([]) do |record, keys|
         attributes = attributes_for_database(record, index_columns, previous: previous)
 
@@ -53,7 +54,7 @@ module ArCache
       instantiate(entry, &block)
     end
 
-    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block)
+    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/CyclomaticComplexity
       records = []
       missed_values = []
       cache_keys_hash = {}

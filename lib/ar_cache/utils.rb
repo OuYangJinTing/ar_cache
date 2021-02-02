@@ -15,7 +15,7 @@ module ArCache
 
     def extract_table_from_sql(sql, type)
       sql = sql.downcase.split.join(' ') # Remove Newline
-      table_names = ActiveRecord::Base.descendants.filter_map { |klass| klass.table_name if klass.table_name }
+      table_names = ActiveRecord::Base.descendants.filter_map(&:table_name)
 
       case type
       when :update
