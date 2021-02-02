@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ArCache
-  class LogSubscriber < ActiveSupport::LogSubscriber # :nodoc: all
+  class LogSubscriber < ActiveSupport::LogSubscriber
     SUCCESSFULLY = 1
     FAILED = 0
 

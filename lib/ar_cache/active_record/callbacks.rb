@@ -2,13 +2,12 @@
 
 module ArCache
   module ActiveRecord
-    module Callbacks # :nodoc: all
+    module Callbacks
       extend ActiveSupport::Concern
 
       included do
-        after_commit(on: :create, prepend: true) { ArCache::Model.get(self.class).write(self) }
-        after_commit(on: :update, prepend: true) { ArCache::Model.get(self.class).update(self) }
-        after_commit(on: :destroy, prepend: true) { ArCache::Model.get(self.class).delete(self) }
+        after_commit(on: :create, prepend: true) { ar_cache_model.write(self) }
+        after_commit(on: [:update, :destroy], prepend: true) { ar_cache_model.delete(self, previous: true) }
       end
     end
   end

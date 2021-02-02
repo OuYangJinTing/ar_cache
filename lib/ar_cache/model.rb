@@ -1,93 +1,67 @@
 # frozen_string_literal: true
 
 module ArCache
-  class Model # :nodoc: all
+  class Model
     include Store
 
-    OPTIONS = %i[disabled unique_indexes cache_key_prefix expires_in].freeze
+    OPTIONS = %i[disabled select_disabled cache_key_prefix expires_in unique_indexes].freeze
 
-    # Add '_TABLE' of suffix to avoid constant conflict
-    def self.get(klass)
-      table_name = klass.is_a?(String) ? klass : klass.table_name
-      const_get("::#{name}::#{table_name.upcase}_TABLE")
-    rescue ::NameError
-      base_class = klass.base_class
-      validation_sti!(base_class)
-
-      model = new(base_class, ArCache::Configuration.get_model_options(klass.table_name))
-      const_set("#{table_name.upcase}_TABLE", model)
-    end
-
-    # We need check ignored columns of ActiveRecord Single Table Inheritance Model,
-    # because ArCache's cache is shared by between SubClass and BaseClass,
-    # if SubClass need columns is in BaseClass ignored columns, read cache will be incomplete.
-    def self.validation_sti!(klass)
-      return if klass.ignored_columns.empty?
-
-      subclass = klass.descendants.find { |sub| (klass.ignored_columns - sub.ignored_columns).any? }
-      return unless subclass
-
-      raise StiError, <<-MSG.strip_heredoc
-        ArCache support ActiveRecord Single Table Inheritance, but BaseClass.ignored_columns must include all SubClass.ignored_columns.
-        Here, (SubClass)#{subclass.name}.ignored_columns #{subclass.ignored_columns.inspect} is not in (BaseClass)#{klass.name}.ignored_columns #{klass.ignored_columns.inspect}.
-        ArCache does not support this special case, but fortunately, you can handle it with the following operations:
-        1. New common superclass #{klass.name}ArCache
-          class #{klass.name}ArCache < #{(defined?(ApplicationRecord) ? ApplicationRecord : ::ActiveRecord::Base).name}
-            self.ignored_columns = # if common ignore columns exists
-          end
-        2. Modify superclasses that ArCache do not support of model
-          class #{klass.name} < #{klass.name}ArCache
-            ...
-          end
-        OK, now you can use ArCache happily!
-      MSG
-    end
-
-    attr_reader :klass, :version, *OPTIONS
+    attr_reader :klass, *OPTIONS
 
     delegate :table_name, :primary_key, :columns, :column_names, :columns_hash, :ignored_columns, :inheritance_column,
              to: :klass
 
-    def initialize(klass, options)
-      @klass = klass
+    def initialize(klass)
+      @klass = klass.base_class
 
+      options = ArCache.get_model_options(table_name)
+      (OPTIONS - [:unique_indexes]).each { |ivar| instance_variable_set("@#{ivar}", options[ivar]) }
+      @disabled = false if @klass == ArCache::Monitor # The ArCache::Monitor force disabled ArCache feature
       normalize_unique_indexes(options[:unique_indexes])
-      @disabled = !!options[:disabled]
-      @disabled = false if klass == ArCache::Monitor # ArCache::Monitor force disabled
-      @expires_in = options[:expires_in].to_i
-      @cache_key_prefix = options[:cache_key_prefix].to_s
-      @version = ArCache::Monitor.activate(self).version
 
-      klass.include(ArCache::ActiveRecord::Callbacks) unless disabled?
-    end
-
-    def update_version(version)
-      @version = version
+      monitor = ArCache::Monitor.enable(self)
+      update_version(monitor.version)
     end
 
     def disabled?
       @disabled
     end
 
-    def cache_options
-      @cache_options ||= expires_in ? { expires_in: expires_in } : nil
+    def enabled?
+      !@disabled
     end
 
-    def index_columns
-      @index_columns ||= unique_indexes.flatten.unshift(primary_key)
+    def select_disabled?
+      @select_disabled
+    end
+
+    def select_enabled?
+      !@select_disabled
+    end
+
+    def version
+      cache_store.fetch(version_cache_key, expires_in: 1.year) { ArCache::Monitor.version(table_name) }
+    end
+
+    def update_version(version = nil)
+      return if disabled?
+      version ||= ArCache::Monitor.update_version(table_name)
+      cache_store.write(version_cache_key, version, expires_in: 1.year)
     end
 
     def whole_cache_key_prefix
       @whole_cache_key_prefix ||= begin
         short_sha = Digest::SHA1.hexdigest(columns.to_json).first(7)
-        "#{ArCache::Configuration.env}:#{cache_key_prefix}:#{table_name}:#{short_sha}"
+        "#{cache_key_prefix}:arcache:#{table_name}:#{short_sha}"
       end
+    end
 
-      "#{@whole_cache_key_prefix}:#{version}"
+    def version_cache_key
+      "#{whole_cache_key_prefix}:version"
     end
 
     def primary_cache_key(id)
-      "#{whole_cache_key_prefix}:#{primary_key}=#{id}"
+      "#{whole_cache_key_prefix}:#{version}:#{primary_key}=#{id}"
     end
 
     def cache_key(where_values_hash, index, multi_values_key = nil, key_value = nil)
@@ -99,7 +73,11 @@ module ArCache
         "#{column}=#{value}"
       end.sort.join('&') # The called #sort avoid key is inconsistent caused by order
 
-      "#{whole_cache_key_prefix}:#{digest}"
+      "#{whole_cache_key_prefix}:#{version}:#{digest}"
+    end
+
+    def index_columns
+      @index_columns ||= unique_indexes.flatten.unshift(primary_key)
     end
 
     def attributes_for_database(record, columns, previous: false)
@@ -121,7 +99,7 @@ module ArCache
       klass.send(:instantiate_instance_of, klass, attributes, &block)
     end
 
-    private def normalize_unique_indexes(unique_indexes) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    private def normalize_unique_indexes(unique_indexes)
       @unique_indexes = if unique_indexes
                           Array.wrap(unique_indexes).map do |index|
                             Array.wrap(index).map do |column|

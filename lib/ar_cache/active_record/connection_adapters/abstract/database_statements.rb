@@ -3,40 +3,38 @@
 module ArCache
   module ActiveRecord
     module ConnectionAdapters
-      module DatabaseStatements # :nodoc: all
-        # def update(sql, ...) ... only support ruby 2.7+
+      module DatabaseStatements
+        # TODO
         # def execute(sql, name = nil)
-        #   super.tap { ArCache::Monitor.match_update_version(sql) }
         # end
 
-        # def update(arel, ...) ... only support ruby 2.7+
         def update(arel, name = nil, binds = [])
           super.tap { update_ar_cache_version(arel, :update) }
         end
 
-        # def delete(arel, ...) ... only support ruby 2.7+
         def delete(arel, name = nil, binds = [])
           super.tap { update_ar_cache_version(arel, :delete) }
         end
 
         # def truncate(table_name, ...) ... only support ruby 2.7+
         def truncate(table_name, name = nil)
-          super.tap { ArCache::Monitor.update_version(table_name) }
+          super.tap { ArCache::Utils.model(table_name)&.update_version }
         end
 
         def truncate_tables(*table_names)
           super.tap do
-            table_names.each { |table_name| ArCache::Monitor.update_version(table_name) }
+            table_names.each { |table_name| ArCache::Utils.model(table_name)&.update_version }
           end
         end
 
         private def update_ar_cache_version(arel_or_sql_string, type)
-          if disable_update_ar_cache_version?
+          if disabled_update_ar_cache_version?
             enable_update_ar_cache_version
           elsif arel_or_sql_string.is_a?(Arel)
-            ArCache::Monitor.update_cache_version(arel_or_sql_string.ast.relation.name)
+            arel_or_sql_string.ast.relation.instance_variable_get(:@klass).ar_cache_model.update_version
           else
-            ArCache::Monitor.update_cache_version(ArCache::Monitor.extract_table_from_sql(arel_or_sql_string, type))
+            table_name = ArCache::Utils.extract_table_from_sql(arel_or_sql_string, type)
+            ArCache::Utils.model(table_name)&.update_version if table_name
           end
         end
       end

@@ -5,7 +5,7 @@ require 'rails/generators/migration'
 require 'rails/generators/active_record/migration'
 
 module ArCache
-  module Generators # :nodoc: all
+  module Generators
     class InstallGenerator < Rails::Generators::Base
       include Rails::Generators::Migration
       include ::ActiveRecord::Generators::Migration

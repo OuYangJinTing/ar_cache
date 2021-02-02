@@ -1,46 +1,33 @@
 # frozen_string_literal: true
 
-# env set
 module ArCache
-  class Configuration # :nodoc: all
+  class Configuration
     class << self
-      attr_reader :cache_store
-      attr_writer :env
+      attr_accessor :disabled, :select_disabled, :cache_key_prefix, :expires_in
+      attr_reader :cache_store, :models_options
 
       def configure
         block_given? ? yield(self) : self
       end
 
-      def env
-        @env || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'unknwon'
-      end
+      def get_model_options(table_name)
+        options = models_options[table_name.to_sym] || {}
+        options[:disabled] = !!disabled unless options.key?(:disabled)
+        options[:cache_key_prefix] = cache_key_prefix.to_s unless options.key?(:cache_key_prefix)
+        options[:expires_in] = expires_in.to_i unless options.key?(:expires_in)
+        options[:expires_in] = !!select_disabled unless options.key?(:expires_in)
 
-      def models_options
-        @models_options || {}
+        options
       end
 
       def models_options=(options)
-        options.each do |model, hash|
-          raise ArgumentError, "The #{model.inspect} must be Symbol type" unless model.is_a?(Symbol)
+        options.each do |table_name, hash|
+          raise ArgumentError, "The #{model.inspect} must be Symbol type" unless table_name.is_a?(Symbol)
 
           hash.assert_valid_keys(ArCache::Model::OPTIONS)
         end
 
-        @models_options = options.freeze
-      end
-
-      def default_model_options
-        @default_model_options || { cache_key_prefix: 'arcache', expires_in: 1.week }
-      end
-
-      def default_model_options=(options)
-        options.assert_valid_keys(ArCache::Model::OPTIONS)
-        @default_model_options = options.freeze
-      end
-
-      def get_model_options(table_name)
-        options = models_options[table_name.to_sym] || {}
-        default_model_options.merge(options)
+        @models_options = options
       end
 
       def cache_store=(cache_store)
@@ -70,6 +57,12 @@ module ArCache
       end
     end
 
+    # Initialize the default values
+    @disabled = false
+    @select_disabled = true
+    @cache_key_prefix = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'unknwon'
+    @expires_in = 1.week
+    @models_options = {}
     self.cache_store = if defined?(Rails) && Rails.cache.is_a?(ActiveSupport::Cache::Store)
                          Rails.cache
                        else

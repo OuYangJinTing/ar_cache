@@ -2,7 +2,7 @@
 
 module ArCache
   module ActiveRecord
-    module Transactions # :nodoc: all
+    module Transactions
       def with_transaction_returning_status
         self.class.connection.disable_update_ar_cache_version
         super

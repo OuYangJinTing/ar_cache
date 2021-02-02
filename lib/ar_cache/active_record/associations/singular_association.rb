@@ -3,9 +3,9 @@
 module ArCache
   module ActiveRecord
     module Associations
-      module HasOneAssociation
+      module SingularAssociation
         private def skip_statement_cache?(scope)
-          !ArCache::Model.get(reflection.klass).disabled? || super
+          reflection.klass.ar_cache_model.enabled? || super
         end
       end
     end

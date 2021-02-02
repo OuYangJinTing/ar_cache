@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 module ArCache
-  module Store # :nodoc: all
+  module Store
     delegate :cache_store, to: ArCache::Configuration
 
-    def update(*records)
-      delete(*records, previous: true)
-      write(*records)
-    end
+    # TODO
+    # def update(*records)
+    # end
 
     def write(*records)
+      return if disabled?
       return unless column_names == records.first&.attribute_names
       return unless records.first&.id?
 
@@ -22,10 +22,11 @@ module ArCache
         unique_indexes.each { |index| hash[cache_key(attributes, index)] = primary_cache_key }
       end
 
-      cache_store.write_multi(records_attributes, cache_options)
+      cache_store.write_multi(records_attributes, expires_in: expires_in)
     end
 
     def delete(*records, previous: false)
+      return if disabled?
       cache_keys = records.each_with_object([]) do |record, keys|
         attributes = attributes_for_database(record, index_columns, previous: previous)
 
@@ -37,7 +38,7 @@ module ArCache
     end
 
     def delete_by_primary_key(id)
-      cache_store.delete(primary_cache_key(id))
+      cache_store.delete(primary_cache_key(id)) if enabled?
     end
 
     def read_record(where_values_hash, index, select_values, &block)
@@ -52,7 +53,7 @@ module ArCache
       instantiate(entry, &block)
     end
 
-    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/CyclomaticComplexity
+    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block)
       records = []
       missed_values = []
       cache_keys_hash = {}

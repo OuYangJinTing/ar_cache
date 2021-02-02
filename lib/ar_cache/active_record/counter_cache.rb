@@ -3,11 +3,12 @@
 module ArCache
   module ActiveRecord
     module CounterCache
-      module ClassMethods # :nodoc: all
-        # def update_counters(id, ...) ... only support ruby 2.7+
+      module ClassMethods
         def update_counters(id, counters)
           connection.disable_update_ar_cache_version
-          super.tap { ArCache::Model.get(self).delete_by_primary_key(id) }
+          super.tap { ar_cache_model.delete_by_primary_key(id) }
+        ensure
+          connection.enable_update_ar_cache_version
         end
       end
     end

@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 module ArCache
-  class Query # :nodoc: all
+  class Query
     attr_reader :relation, :model
 
-    def initialize(relation, model)
+    def initialize(relation)
       @relation = relation
-      @model = model
+      @model = relation.klass.ar_cache_model
     end
 
     def exec_queries(&block)
@@ -28,16 +28,13 @@ module ArCache
       records.tap { reset }
     end
 
-    private def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-      return false if model.disabled?
-
-      # ActiveRecord::Relation::VALUE_METHODS is cacheable?
+    private def exec_queries_cacheable?
       return false if relation.skip_query_cache_value
       return false if relation.group_values.any?
       return false if relation.joins_values.any?
+      return false if relation.left_outer_joins_values.any?
       return false if relation.offset_value
       return false unless relation.from_clause.empty?
-      return false unless left_outer_joins_values_cacheable?
       return false unless where_clause_cacheable?
       return false unless select_values_cacheable?
       return false unless order_values_cacheable?
@@ -46,11 +43,7 @@ module ArCache
       true
     end
 
-    def left_outer_joins_values_cacheable?
-      relation.left_outer_joins_values.empty? || relation.left_outer_joins_values.one?
-    end
-
-    private def where_clause_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    private def where_clause_cacheable?
       return false if predicates.empty?
       return false if where_values_hash.length != predicates.length
 
@@ -84,12 +77,13 @@ module ArCache
 
     private def select_values_cacheable?
       return true if relation.select_values.empty?
+      return false if model.select_disabled?
 
       @select_values = relation.select_values.map(&:to_s)
       (@select_values - relation.klass.column_names).empty?
     end
 
-    private def order_values_cacheable? # rubocop:disable Metrics/CyclomaticComplexity
+    private def order_values_cacheable?
       return true if single_query?
 
       size = relation.order_values.size
@@ -127,9 +121,9 @@ module ArCache
       return records unless @order_name
 
       method = "#{@order_name}_for_database"
-      return records.sort! { |a, b| b.send(method) <=> a.send(method) } if @order_desc
+      return records.sort { |a, b| b.send(method) <=> a.send(method) } if @order_desc
 
-      records.sort! { |a, b| a.send(method) <=> b.send(method) }
+      records.sort { |a, b| a.send(method) <=> b.send(method) }
     end
 
     private def reset

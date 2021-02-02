@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module ArCache
-  class Monitor < ::ActiveRecord::Base # :nodoc: all
+  class Monitor < ActiveRecord::Base
     self.table_name = 'ar_cache_monitors'
 
     serialize :unique_indexes,  Array, default: []
@@ -9,43 +9,33 @@ module ArCache
 
     default_scope { skip_ar_cache }
 
-    class << self
-      def get(table_name)
-        find_by(table_name: table_name)
-      end
-
-      def extract_table_from_sql(sql, type)
-        sql = sql.downcase.split.join(' ') # Remove Newline
-        table_names = ::ActiveRecord::Base.descendants.map(&:table_name).compact
-
-        case type
-        when :update
-          sql.match(/^update.*(#{table_names.join('|')}).*set/).try(:[], 1)
-        when :delete
-          sql.match(/^delete.*from.*(#{table_names.join('|')})/).try(:[], 1)
-        else
-          raise SqlOperationError, "Unrecognized sql operation: #{sql}"
-        end
-      end
-
-      def activate(model)
-        monitor = get(model.table_name) || new(table_name: model.table_name)
-        monitor.activate(model)
-        monitor
-      end
-
-      def update_version(table_name)
-        get(table_name)&.update_version if table_name.present?
-      end
+    def self.get(table_name)
+      find_by(table_name: table_name)
     end
 
-    def activate(model)
+    def self.version(table_name)
+      get(table_name).version
+    end
+
+    def self.update_version(table_name)
+      monitor = get(table_name)
+      monitor.update_version
+      monitor.version
+    end
+
+    def self.enable(model)
+      monitor = get(model.table_name) || new(table_name: model.table_name)
+      monitor.enable(model)
+      monitor
+    end
+
+    def enable(model)
       with_optimistic_retry do
         if disabled != model.disabled ||
            unique_indexes.any? { |index| model.unique_indexes.exclude?(index) } ||
            ignored_columns.any? { |column| model.ignored_columns.exclude?(column) }
 
-          increment('version')
+          self.version += 1
         end
 
         self.disabled = model.disabled
@@ -57,11 +47,9 @@ module ArCache
 
     def update_version
       with_optimistic_retry do
-        increment('version')
+        self.version += 1
         save!
       end
-
-      ArCache::Model.get(table_name).update_version(version)
     end
 
     def with_optimistic_retry

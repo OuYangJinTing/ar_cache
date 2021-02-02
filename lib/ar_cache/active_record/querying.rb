@@ -3,8 +3,15 @@
 module ArCache
   module ActiveRecord
     module Querying
-      delegate :find, :find_by, to: :all
       delegate :skip_ar_cache, to: :all
+
+      def find(*ids)
+        defined?(@ar_cache_model) && ar_cache_model.disabled? ? super : all.find(*ids) # force skip statement cache
+      end
+
+      def find_by(*args)
+        defined?(@ar_cache_model) && ar_cache_model.disabled? ? super : all.find_by(*args) # force skip statement cache
+      end
     end
   end
 end

@@ -26,8 +26,7 @@ Lint/NestedMethodDefinition:
   Enabled: false
 
 Style/AccessModifierDeclarations:
-  Enabled: true
-  EnforcedStyle: inline
+  Enabled: false
 
 Style/DoubleNegation:
   Enabled: false
