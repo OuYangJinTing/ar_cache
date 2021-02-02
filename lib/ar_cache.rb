@@ -24,6 +24,5 @@ module ArCache
 
   class SqlOperationError < Error; end
 
-  singleton_class.delegate :cache_store, :disabled, :cache_key_prefix, :expires_in, :models_options,
-                           :configure, :get_model_options, to: Configuration
+  singleton_class.delegate :configure, to: Configuration
 end

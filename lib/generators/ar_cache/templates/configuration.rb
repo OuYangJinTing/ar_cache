@@ -20,6 +20,7 @@ ArCache.configure do |config|
   # config.models_options = {
   #   table_name: {
   #     disabled: Boolean,
+  #     select_disabled: Boolean,
   #     cache_key_prefix: String,
   #     expires_in: Numeric,
   #     unique_indexes: Array # The primary key is used by default

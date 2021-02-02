@@ -14,7 +14,7 @@ module ArCache
     def initialize(klass)
       @klass = klass.base_class
 
-      options = ArCache.get_model_options(table_name)
+      options = ArCache::Configuration.get_model_options(table_name)
       (OPTIONS - [:unique_indexes]).each { |ivar| instance_variable_set("@#{ivar}", options[ivar]) }
       @disabled = false if @klass == ArCache::Monitor # The ArCache::Monitor force disabled ArCache feature
       normalize_unique_indexes(options[:unique_indexes])
