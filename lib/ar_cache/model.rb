@@ -16,7 +16,9 @@ module ArCache
 
       options = ArCache::Configuration.get_model_options(table_name)
       (OPTIONS - [:unique_indexes]).each { |ivar| instance_variable_set("@#{ivar}", options[ivar]) }
+
       @disabled = false if @klass == ArCache::Monitor # The ArCache::Monitor force disabled ArCache feature
+
       normalize_unique_indexes(options[:unique_indexes])
 
       monitor = ArCache::Monitor.enable(self)
@@ -40,14 +42,14 @@ module ArCache
     end
 
     def version
-      cache_store.fetch(version_cache_key, expires_in: 1.year) { ArCache::Monitor.version(table_name) }
+      cache_store.fetch(version_cache_key, expires_in: 1.month) { ArCache::Monitor.version(table_name) }
     end
 
     def update_version(version = nil)
       return if disabled?
 
       version ||= ArCache::Monitor.update_version(table_name)
-      cache_store.write(version_cache_key, version, expires_in: 1.year)
+      cache_store.write(version_cache_key, version, expires_in: 1.month)
     end
 
     def whole_cache_key_prefix
@@ -112,12 +114,9 @@ module ArCache
                             end.uniq
                           end.uniq
                         else
-                          ::ActiveRecord::Base.connection.indexes(table_name).map do |index|
-                            next unless index.unique
-                            next if index.columns.any? { |column| columns_hash[column].null }
-
-                            index.columns
-                          end.compact
+                          ::ActiveRecord::Base.connection.indexes(table_name).filter_map do |index|
+                            index.columns if index.unique && index.columns.none? { |column| columns_hash[column].null }
+                          end
                         end
 
       @unique_indexes = (@unique_indexes - [primary_key]).sort_by(&:size).freeze

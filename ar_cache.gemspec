@@ -12,9 +12,7 @@ Gem::Specification.new do |spec|
   spec.description   = spec.summary
   spec.homepage      = 'https://github.com/OuYangJinTing/ar_cache'
   spec.license       = 'MIT'
-  spec.required_ruby_version = Gem::Requirement.new('>= 2.4.0')
-
-  # spec.metadata['allowed_push_host'] = "TODO: Set to 'http://mygemserver.com'"
+  spec.required_ruby_version = Gem::Requirement.new('>= 2.5.0')
 
   spec.metadata['homepage_uri'] = spec.homepage
   spec.metadata['source_code_uri'] = 'https://github.com/OuYangJinTing/ar_cache.git'
