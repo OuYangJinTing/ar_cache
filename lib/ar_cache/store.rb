@@ -43,15 +43,20 @@ module ArCache
     end
 
     def read_record(where_values_hash, index, select_values, &block)
-      entry = cache_store.read(cache_key(where_values_hash, index))
+      cache_key = cache_key(where_values_hash, index)
+      entry = cache_store.read(cache_key)
       return unless entry
 
       entry = cache_store.read(entry) if entry.is_a?(String) # is primary cache key
       return unless entry
-      return unless assert_correct_entry?(entry, where_values_hash)
 
-      entry = entry.slice(*select_values) if select_values
-      instantiate(entry, &block)
+      if correct_entry?(entry, where_values_hash)
+        entry = entry.slice(*select_values) if select_values
+        instantiate(entry, &block)
+      else
+        cache_store.delete(cache_key) # TODO: Should only delete the cache for the wrong value of the index column
+        nil
+      end
     end
 
     def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/CyclomaticComplexity
@@ -82,17 +87,23 @@ module ArCache
         end
       end
 
+      error_cache_kyes = []
       entries_hash.each do |key, entry|
-        missed_values << cache_keys_hash[key] and next unless assert_correct_entry?(entry, where_values_hash)
-
-        entry = entry.slice(*select_values) if select_values
-        records << instantiate(entry, &block)
+        if correct_entry?(entry, where_values_hash)
+          entry = entry.slice(*select_values) if select_values
+          records << instantiate(entry, &block)
+        else
+          missed_values << cache_keys_hash[key]
+          error_cache_kyes << key
+        end
       end
+      # TODO: Should only delete the cache for the wrong value of the index column
+      cache_store.delete_multi(error_cache_kyes) if error_cache_kyes.any?
 
       missed_values.empty? ? [records] : [records, missed_values]
     end
 
-    private def assert_correct_entry?(entry, where_values_hash)
+    private def correct_entry?(entry, where_values_hash)
       where_values_hash.all? do |key, value|
         if value.is_a?(Array)
           value.include?(entry[key])
