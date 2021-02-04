@@ -10,7 +10,7 @@ module ArCache
       @missed_values = []
     end
 
-    def cacheable?
+    def cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return @cacheable if defined?(@cacheable)
 
       if predicates.any? || where_values_hash.length == predicates.length
@@ -83,8 +83,6 @@ module ArCache
       else
         @missed_values << @original_cache_keys_hash[@cache_keys_hash[key]]
       end
-
-      @missed_values
     end
 
     def take_orginal_cache_key(key, invalid_keys)
@@ -118,6 +116,7 @@ module ArCache
     def where_values_hash
       @where_values_hash ||= equalities(predicates).each_with_object({}) do |node, hash|
         next if model.table_name != node.left.relation.name
+
         name = node.left.name.to_s
         value = extract_node_value(node.right)
         hash[name] = value

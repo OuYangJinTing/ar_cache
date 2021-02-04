@@ -2,7 +2,7 @@
 
 module ArCache
   module Store
-    def write(*records) # rubocop:disable Metrics/CyclomaticComplexity
+    def write(*records) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       return unless enabled?
       return unless column_names == records.first&.attribute_names
       return unless records.first&.id?
@@ -59,7 +59,7 @@ module ArCache
 
     private def read_multi_records(records, where_clause, select_values, &block)
       entries_hash = cache_store.read_multi(*where_clause.cache_keys_hash.keys)
-      where_clause.cache_keys_hash.each { |k, v| where_clause.add_missed_values(k) unless entries_hash.key?(k) }
+      where_clause.cache_keys_hash.each_key { |k| where_clause.add_missed_values(k) unless entries_hash.key?(k) }
 
       invalid_keys = []
 
@@ -73,7 +73,8 @@ module ArCache
         end
       end
 
-      cache_store.delete_multi(invalid_keys) if invalid_keys.any? # TODO: Should only delete the cache for the wrong value of the index column
+      # TODO: Should only delete the cache for the wrong value of the index column
+      cache_store.delete_multi(invalid_keys) if invalid_keys.any?
 
       records
     end

@@ -81,7 +81,7 @@ module ArCache
     end
 
     private def records_order(records)
-      return records if records.size < 1
+      return records if records.size < 2
       return records if @order_name.nil?
 
       method = "#{@order_name}_for_database"

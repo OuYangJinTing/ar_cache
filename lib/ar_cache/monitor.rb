@@ -4,7 +4,7 @@ module ArCache
   class Monitor < ActiveRecord::Base # rubocop:disable Rails/ApplicationRecord
     self.table_name = 'ar_cache_monitors'
 
-    serialize :unique_indexes,  Array, default: []
+    serialize :unique_indexes, Array, default: []
 
     default_scope { skip_ar_cache }
 

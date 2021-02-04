@@ -5,7 +5,7 @@ require 'ar_cache/model'
 module ArCache
   class Configuration
     class << self
-      attr_accessor *ArCache::Model::OPTIONS
+      attr_accessor(*ArCache::Model::OPTIONS)
       attr_reader :cache_store, :models_options
     end
 
@@ -25,6 +25,7 @@ module ArCache
     def self.models_options=(options)
       options.each do |table_name, hash|
         raise ArgumentError, "The #{model.inspect} must be Symbol type" unless table_name.is_a?(Symbol)
+
         hash.assert_valid_keys(ArCache::Model::OPTIONS)
       end
 
@@ -32,11 +33,11 @@ module ArCache
     end
 
     def self.cache_store=(cache_store)
-      if cache_store.is_a?(ActiveSupport::Cache::Store)
-        @cache_store = cache_store
-      else
+      unless cache_store.is_a?(ActiveSupport::Cache::Store)
         raise ArgumentError, 'The cache_store must be ActiveSupport::Cache::Store object'
       end
+
+      @cache_store = cache_store
     end
 
     # The set default values

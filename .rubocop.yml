@@ -13,17 +13,17 @@ Metrics/BlockLength:
 Metrics/AbcSize:
   Enabled: false
 
-# Metrics/ClassLength:
-#   Enabled: true
-#   Max: 300
+Metrics/ClassLength:
+  Enabled: true
+  Max: 300
 
-# Metrics/ModuleLength:
-#   Enabled: true
-#   Max: 300
+Metrics/ModuleLength:
+  Enabled: true
+  Max: 300
 
-# Metrics/MethodLength:
-#   Enabled: true
-#   Max: 25
+Metrics/MethodLength:
+  Enabled: true
+  Max: 25
 
 Lint/NestedMethodDefinition:
   Enabled: false
@@ -32,6 +32,9 @@ Style/AccessModifierDeclarations:
   Enabled: false
 
 Style/DoubleNegation:
+  Enabled: false
+
+Style/ConditionalAssignment:
   Enabled: false
 
 Style/Documentation:
