@@ -56,7 +56,7 @@ module ActiveRecord
 end
 
 ArCache.configure do |config|
-  # ...
+  config.select_disabled = false
 end
 
 # TODO: Auto perform lib/generators/ar_cache/templates/migrate/create_ar_cache_monitors.rb.tt
@@ -64,9 +64,8 @@ ActiveRecord::Base.connection.create_table(:ar_cache_monitors, force: :cascade) 
   t.string  :table_name,      null: false
   t.integer :version,         null: false, default: 0
   t.integer :lock_version,    null: false, default: 0
-  t.boolean :disabled,        null: false, default: false
+  t.boolean :disabled,        null: false
   t.string  :unique_indexes,  limit: 1000
-  t.string  :ignored_columns, limit: 1000
 
   t.index   :table_name, unique: true
 end

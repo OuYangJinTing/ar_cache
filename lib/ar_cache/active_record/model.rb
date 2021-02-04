@@ -7,7 +7,7 @@ module ArCache
         # We need check ignored columns of ActiveRecord Single Table Inheritance Model,
         # because ArCache's cache is shared by between SubClass and BaseClass,
         # if SubClass need columns is in BaseClass ignored columns, read cache will be incomplete.
-        def ignored_columns=(_)
+        def ignored_columns=(columns)
           super.tap do
             return if base_class?
             return if ignored_columns.empty?
@@ -30,13 +30,12 @@ module ArCache
           end
         end
 
-        def table_name=(_)
+        def table_name=(value)
           super.tap { build_ar_cache_model }
         end
 
         def ar_cache_model
-          return build_ar_cache_model unless defined?(@ar_cache_model)
-
+          build_ar_cache_model unless defined?(@ar_cache_model)
           @ar_cache_model
         end
 

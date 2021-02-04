@@ -9,10 +9,6 @@ module ArCache
       # TODO
     end
 
-    def read_multi(event)
-      # TODO
-    end
-
     attach_to :ar_cache
   end
 end

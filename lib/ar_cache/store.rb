@@ -2,24 +2,23 @@
 
 module ArCache
   module Store
-    delegate :cache_store, to: ArCache::Configuration
-
-    # TODO
-    # def update(*records)
-    # end
-
     def write(*records) # rubocop:disable Metrics/CyclomaticComplexity
-      return if disabled?
+      return unless enabled?
       return unless column_names == records.first&.attribute_names
       return unless records.first&.id?
 
-      records_attributes = records.each_with_object({}) do |record, hash|
-        attributes = attributes_for_database(record, column_names)
+      records_attributes = records.each_with_object({}) do |record, attributes_cache_hash|
+        attributes = attributes_for_database(record)
 
-        primary_cache_key = cache_key(attributes, primary_key)
-        hash[primary_cache_key] = attributes
-
-        unique_indexes.each { |index| hash[cache_key(attributes, index)] = primary_cache_key }
+        primary_cache_key = nil
+        unique_indexes.each_with_index do |index, i|
+          if i.zero?
+            primary_cache_key = cache_key(attributes, [primary_key])
+            attributes_cache_hash[primary_cache_key] = attributes
+          else
+            attributes_cache_hash[cache_key(attributes, index)] = primary_cache_key
+          end
+        end
       end
 
       cache_store.write_multi(records_attributes, expires_in: expires_in)
@@ -30,87 +29,67 @@ module ArCache
 
       cache_keys = records.each_with_object([]) do |record, keys|
         attributes = attributes_for_database(record, index_columns, previous: previous)
-
-        keys << cache_key(attributes, primary_key)
         unique_indexes.each { |index| keys << cache_key(attributes, index) }
       end
 
       cache_store.delete_multi(cache_keys)
     end
 
-    def delete_by_primary_key(id)
-      cache_store.delete(primary_cache_key(id)) if enabled?
+    def read_records(where_clause, select_values, &block)
+      if where_clause.single?
+        read_single_record([], where_clause, select_values, &block)
+      else # is multi
+        read_multi_records([], where_clause, select_values, &block)
+      end
     end
 
-    def read_record(where_values_hash, index, select_values, &block)
-      cache_key = cache_key(where_values_hash, index)
-      entry = cache_store.read(cache_key)
-      return unless entry
+    private def read_single_record(records, where_clause, select_values, &block)
+      entry = cache_store.read(where_clause.cache_key) if where_clause.cache_key
+      return records unless entry
 
-      entry = cache_store.read(entry) if entry.is_a?(String) # is primary cache key
-      return unless entry
-
-      if correct_entry?(entry, where_values_hash)
+      if correct_entry?(entry, where_clause.to_h)
         entry = entry.slice(*select_values) if select_values
-        instantiate(entry, &block)
+        records << instantiate(entry, &block)
       else
-        cache_store.delete(cache_key) # TODO: Should only delete the cache for the wrong value of the index column
-        nil
+        where_clause.delete_cache_keys # TODO: Should only delete the cache for the wrong value of the index column
       end
+
+      records
     end
 
-    def read_multi_records(where_values_hash, index, select_values, multi_values_key, &block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/MethodLength, Metrics/CyclomaticComplexity
-      records = []
-      missed_values = []
-      cache_keys_hash = {}
+    private def read_multi_records(records, where_clause, select_values, &block)
+      entries_hash = cache_store.read_multi(*where_clause.cache_keys_hash.keys)
+      where_clause.cache_keys_hash.each { |k, v| where_clause.add_missed_values(k) unless entries_hash.key?(k) }
 
-      cache_keys = where_values_hash[multi_values_key].map do |value|
-        cache_key(where_values_hash, index, multi_values_key, value).tap { |key| cache_keys_hash[key] = value }
-      end
+      invalid_keys = []
 
-      entries_hash = cache_store.ar_cache_fetch_multi(*cache_keys) { |key| missed_values << cache_keys_hash[key] }
-      return [records, missed_values] if entries_hash.empty?
-
-      # collect primary cache key
-      primary_cache_key_hash = {}
-      entries_hash.delete_if do |key, entry|
-        entry.is_a?(String).tap { |bool| primary_cache_key_hash[key] = entry if bool }
-      end
-
-      if primary_cache_key_hash.any?
-        invert_primary_cache_key_hash = primary_cache_key_hash.invert
-        attributes_entries_hash = cache_store.ar_cache_fetch_multi(*primary_cache_key_hash.values) do |key|
-          missed_values << cache_keys_hash[invert_primary_cache_key_hash[key]]
-        end
-        attributes_entries_hash.each do |key, value|
-          entries_hash[invert_primary_cache_key_hash[key]] = value
-        end
-      end
-
-      error_cache_kyes = []
-      entries_hash.each do |key, entry|
-        if correct_entry?(entry, where_values_hash)
+      entries_hash.each do |k, entry|
+        if correct_entry?(entry, where_clause.to_h)
           entry = entry.slice(*select_values) if select_values
           records << instantiate(entry, &block)
         else
-          missed_values << cache_keys_hash[key]
-          error_cache_kyes << key
+          where_clause.add_missed_values(k)
+          where_clause.concat_orginal_cache_key(k, invalid_keys)
         end
       end
-      # TODO: Should only delete the cache for the wrong value of the index column
-      cache_store.delete_multi(error_cache_kyes) if error_cache_kyes.any?
 
-      missed_values.empty? ? [records] : [records, missed_values]
+      cache_store.delete_multi(invalid_keys) if invalid_keys.any? # TODO: Should only delete the cache for the wrong value of the index column
+
+      records
     end
 
     private def correct_entry?(entry, where_values_hash)
-      where_values_hash.all? do |key, value|
-        if value.is_a?(Array)
-          value.include?(entry[key])
+      where_values_hash.all? do |k, v|
+        if v.is_a?(Array)
+          v.include?(entry[k])
         else
-          entry[key] == value
+          entry[k] == v
         end
       end
+    end
+
+    private def cache_store
+      ArCache::Configuration.cache_store
     end
   end
 end

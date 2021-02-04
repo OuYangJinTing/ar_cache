@@ -6,9 +6,8 @@ class CreateArCacheMonitors < ActiveRecord::Migration[<%= ActiveRecord::VERSION:
       t.string  :table_name,      null: false
       t.integer :version,         null: false, default: 0
       t.integer :lock_version,    null: false, default: 0
-      t.boolean :disabled,        null: false, default: false
+      t.boolean :disabled,        null: false
       t.string  :unique_indexes,  limit: 1000
-      t.string  :ignored_columns, limit: 1000
 
       t.index   :table_name, unique: true
     end

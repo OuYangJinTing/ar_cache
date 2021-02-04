@@ -5,7 +5,6 @@ module ArCache
     self.table_name = 'ar_cache_monitors'
 
     serialize :unique_indexes,  Array, default: []
-    serialize :ignored_columns, Array, default: []
 
     default_scope { skip_ar_cache }
 
@@ -23,24 +22,20 @@ module ArCache
       monitor.version
     end
 
-    def self.enable(model)
+    def self.record(model)
       monitor = get(model.table_name) || new(table_name: model.table_name)
-      monitor.enable(model)
+      monitor.record(model)
       monitor
     end
 
-    def enable(model)
+    def record(model)
       with_optimistic_retry do
-        if disabled != model.disabled ||
-           unique_indexes.any? { |index| model.unique_indexes.exclude?(index) } ||
-           ignored_columns.any? { |column| model.ignored_columns.exclude?(column) }
-
+        if disabled != model.disabled || unique_indexes.any? { |index| model.unique_indexes.exclude?(index) }
           self.version += 1
         end
 
         self.disabled = model.disabled
         self.unique_indexes = model.unique_indexes
-        self.ignored_columns = model.ignored_columns
         save! if changed?
       end
     end

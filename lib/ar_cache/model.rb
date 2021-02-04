@@ -8,8 +8,8 @@ module ArCache
 
     attr_reader :klass, *OPTIONS
 
-    delegate :table_name, :primary_key, :columns, :column_names, :columns_hash, :ignored_columns, :inheritance_column,
-             to: :klass
+    delegate :table_name, :primary_key, :columns, :column_names, :columns_hash, :ignored_columns,
+             :inheritance_column, to: :klass
 
     def initialize(klass)
       @klass = klass.base_class
@@ -21,8 +21,8 @@ module ArCache
 
       normalize_unique_indexes(options[:unique_indexes])
 
-      monitor = ArCache::Monitor.enable(self)
-      update_version(monitor.version)
+      monitor = ArCache::Monitor.record(self)
+      init_version(monitor.version)
     end
 
     def disabled?
@@ -42,15 +42,16 @@ module ArCache
     end
 
     def version
-      cache_store.fetch(version_cache_key, expires_in: 1.month) { ArCache::Monitor.version(table_name) }
+      cache_store.fetch(version_cache_key, expires_in: expires_in) { ArCache::Monitor.version(table_name) }
     end
 
     def update_version(version = nil)
       return if disabled?
 
       version ||= ArCache::Monitor.update_version(table_name)
-      cache_store.write(version_cache_key, version, expires_in: 1.month)
+      cache_store.write(version_cache_key, version, expires_in: expires_in)
     end
+    alias init_version update_version
 
     def whole_cache_key_prefix
       @whole_cache_key_prefix ||= begin
@@ -63,27 +64,21 @@ module ArCache
       "#{whole_cache_key_prefix}:version"
     end
 
-    def primary_cache_key(id)
-      "#{whole_cache_key_prefix}:#{version}:#{primary_key}=#{id}"
-    end
-
     def cache_key(where_values_hash, index, multi_values_key = nil, key_value = nil)
-      return primary_cache_key(key_value || where_values_hash[primary_key]) if index == primary_key
-
-      digest = index.map do |column|
+      where_value = index.map do |column|
         value = column == multi_values_key ? key_value : where_values_hash[column]
         value = Digest::SHA1.hexdigest(value).first(7) if value.respond_to?(:size) && value.size > 40
         "#{column}=#{value}"
-      end.sort.join('&') # The called #sort avoid key is inconsistent caused by order
+      end.sort.join('&')
 
-      "#{whole_cache_key_prefix}:#{version}:#{digest}"
+      "#{whole_cache_key_prefix}:#{version}:#{where_value}"
     end
 
     def index_columns
       @index_columns ||= unique_indexes.flatten.unshift(primary_key)
     end
 
-    def attributes_for_database(record, columns, previous: false)
+    def attributes_for_database(record, columns = column_names, previous: false)
       return columns.index_with { |column| record.send(:attribute_for_database, column) } unless previous
 
       changes = record.previous_changes
@@ -119,7 +114,7 @@ module ArCache
                           end
                         end
 
-      @unique_indexes = (@unique_indexes - [primary_key]).sort_by(&:size).freeze
+      @unique_indexes = (@unique_indexes - [primary_key]).sort_by(&:size).unshift([primary_key]).freeze
     end
   end
 end

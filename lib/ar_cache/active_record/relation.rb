@@ -24,9 +24,7 @@ module ArCache
                     elsif @skip_ar_cache || klass.ar_cache_model.disabled? # || ::ActiveRecord::ExplainRegistry.collect?
                       klass.find_by_sql(arel, &block).freeze
                     else
-                      ArCache::Query.new(self).exec_queries(&block).freeze.tap do |rs|
-                        klass.ar_cache_model.write(*rs)
-                      end
+                      ArCache::Query.new(self).exec_queries(&block).freeze
                     end
 
           preload_associations(records) unless skip_preloading_value
