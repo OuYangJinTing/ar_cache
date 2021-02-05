@@ -36,11 +36,14 @@ module ArCache
     end
 
     def read_records(where_clause, select_values, &block)
-      if where_clause.single?
-        read_single_record([], where_clause, select_values, &block)
-      else # is multi
-        read_multi_records([], where_clause, select_values, &block)
-      end
+      recoreds = if where_clause.single?
+                   read_single_record([], where_clause, select_values, &block)
+                 else # is multi
+                   read_multi_records([], where_clause, select_values, &block)
+                 end
+
+      where_clause.delete_invalid_keys # TODO: Should only delete the cache for the wrong value of the index column
+      recoreds
     end
 
     private def read_single_record(records, where_clause, select_values, &block)
@@ -51,7 +54,7 @@ module ArCache
         entry = entry.slice(*select_values) if select_values
         records << instantiate(entry, &block)
       else
-        where_clause.delete_cache_keys # TODO: Should only delete the cache for the wrong value of the index column
+        where_clause.add_invalid_keys(where_clause.cache_key)
       end
 
       records
@@ -61,20 +64,15 @@ module ArCache
       entries_hash = cache_store.read_multi(*where_clause.cache_keys_hash.keys)
       where_clause.cache_keys_hash.each_key { |k| where_clause.add_missed_values(k) unless entries_hash.key?(k) }
 
-      invalid_keys = []
-
       entries_hash.each do |k, entry|
         if correct_entry?(entry, where_clause.to_h)
           entry = entry.slice(*select_values) if select_values
           records << instantiate(entry, &block)
         else
           where_clause.add_missed_values(k)
-          where_clause.concat_orginal_cache_key(k, invalid_keys)
+          where_clause.add_invalid_keys(k)
         end
       end
-
-      # TODO: Should only delete the cache for the wrong value of the index column
-      cache_store.delete_multi(invalid_keys) if invalid_keys.any?
 
       records
     end
