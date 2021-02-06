@@ -13,7 +13,7 @@ module ArCache
             return if ignored_columns.empty?
             return if (base_class.ignored_columns - ignored_columns).empty?
 
-            raise StiError, <<-MSG.strip_heredoc
+            raise <<-MSG.strip_heredoc
             ArCache support ActiveRecord Single Table Inheritance, but SubClass.ignored_columns must be in BaseClass.ignored_columns.
             Here, (SubClass)#{name}.ignored_columns #{ignored_columns.inspect} is not in (BaseClass)#{base_class.name}.ignored_columns #{base_class.ignored_columns.inspect}.
             ArCache does not support this special case, but fortunately, you can handle it with the following operations:
@@ -30,23 +30,18 @@ module ArCache
           end
         end
 
-        def table_name=(value)
-          super.tap { build_ar_cache_model }
-        end
-
         def ar_cache_model
-          build_ar_cache_model unless defined?(@ar_cache_model)
-          @ar_cache_model
-        end
-
-        private def build_ar_cache_model
-          @ar_cache_model = if abstract_class?
-                              nil
-                            elsif base_class?
-                              ArCache::Model.new(self)
-                            else # is subclass
-                              base_class.ar_cache_model
-                            end
+          @ar_cache_model ||= begin
+            if abstract_class?
+              ArCache::MockModel
+            elsif base_class?
+              ArCache::Model.new(self)
+            else # is subclass
+              base_class.ar_cache_model
+            end
+          rescue StandardError # The table may not exist
+            ArCache::MockModel
+          end
         end
       end
 

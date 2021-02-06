@@ -13,7 +13,7 @@ module ArCache
     def cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return @cacheable if defined?(@cacheable)
 
-      if predicates.any? || where_values_hash.length == predicates.length
+      if predicates.any? && where_values_hash.length == predicates.length
         model.unique_indexes.each do |index|
           @index = index
           @multi_values_key = nil
@@ -132,6 +132,8 @@ module ArCache
           value = extract_node_value(node.right)
           hash[name] = value
         end
+      rescue ActiveModel::RangeError
+        @where_values_hash = {}
       end
       alias to_h where_values_hash
 
@@ -158,9 +160,9 @@ module ArCache
         when Array
           node.map { |v| extract_node_value(v) }
         when Arel::Nodes::BindParam
-          node.value.value_for_database
+          node.value.value_for_database # Maybe raise ActiveModel::RangeError
         when Arel::Nodes::Casted, Arel::Nodes::Quoted
-          node.value_for_database
+          node.value_for_database # Maybe raise ActiveModel::RangeError
         end
       end
     end

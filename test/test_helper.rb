@@ -80,6 +80,16 @@ require 'models/book'
 require 'models/animal'
 require 'models/image'
 
+ArCache::Monitor.ar_cache_model
+User.ar_cache_model
+Image.ar_cache_model
+Identity.ar_cache_model
+Book.ar_cache_model
+Animal.ar_cache_model
+Cat.ar_cache_model
+Dog.ar_cache_model
+Account.ar_cache_model
+
 User.create(name: :ouyang1, email: :ouyang1)
 User.create(name: :ouyang2, email: :ouyang2)
 User.create(name: :ouyang3, email: :ouyang3)

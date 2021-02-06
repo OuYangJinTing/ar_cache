@@ -12,12 +12,14 @@ module ArCache
       find_by(table_name: table_name)
     end
 
-    def self.version(table_name)
-      get(table_name).version
+    def self.version(model)
+      get(model.table_name).version
     end
 
-    def self.update_version(table_name)
-      monitor = get(table_name)
+    def self.update_version(model)
+      monitor = get(model.table_name)
+      return record(model).version unless monitor
+
       monitor.update_version
       monitor.version
     end
@@ -36,7 +38,7 @@ module ArCache
 
         self.disabled = model.disabled
         self.unique_indexes = model.unique_indexes
-        save! if changed?
+        save! if new_record? || changed?
       end
     end
 

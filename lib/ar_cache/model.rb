@@ -11,18 +11,23 @@ module ArCache
     delegate :table_name, :primary_key, :columns, :column_names, :columns_hash, :ignored_columns,
              :inheritance_column, to: :klass
 
+    def self.all
+      @all ||= []
+    end
+
     def initialize(klass)
       @klass = klass.base_class
 
       options = ArCache::Configuration.get_model_options(table_name)
       (OPTIONS - [:unique_indexes]).each { |ivar| instance_variable_set("@#{ivar}", options[ivar]) }
-
-      @disabled = false if @klass == ArCache::Monitor # The ArCache::Monitor force disabled ArCache feature
-
-      normalize_unique_indexes(options[:unique_indexes])
+      # The ArCache::Monitor must force disabled ArCache feature, otherwise it will trigger endless loop
+      @disabled = true if @klass == ArCache::Monitor
+      unique_indexes(options[:unique_indexes])
 
       monitor = ArCache::Monitor.record(self)
       init_version(monitor.version)
+
+      self.class.all << self
     end
 
     def disabled?
@@ -41,15 +46,47 @@ module ArCache
       !@select_disabled
     end
 
+    def unique_indexes(unique_indexes = nil) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      @unique_indexes ||= begin
+        unique_indexes = if unique_indexes
+                           Array.wrap(unique_indexes).map do |index|
+                             Array.wrap(index).map do |column|
+                               column = column.to_s.tap do |name|
+                                 unless column_names.include?(name)
+                                   raise ArgumentError, "The #{column.inspect} is not in #{klass.name}.column_names"
+                                 end
+                               end
+                             end.uniq
+                           end.uniq
+                         else
+                           ::ActiveRecord::Base.connection.indexes(table_name).filter_map do |index|
+                             next unless index.unique
+                             next if index.columns.any? { |column| columns_hash[column].null }
+
+                             index.columns
+                           rescue StandardError
+                             false
+                           end
+                         end
+
+        (unique_indexes - [primary_key]).sort_by(&:size).unshift([primary_key]).freeze
+      end
+    end
+
+    def index_columns
+      @index_columns ||= unique_indexes.flatten.unshift(primary_key)
+    end
+
     def version
-      cache_store.fetch(version_cache_key, expires_in: expires_in) { ArCache::Monitor.version(table_name) }
+      cache_store.fetch(version_cache_key, expires_in: expires_in) { ArCache::Monitor.version(self) }
     end
 
     def update_version(version = nil)
       return if disabled?
 
-      version ||= ArCache::Monitor.update_version(table_name)
+      version ||= ArCache::Monitor.update_version(self)
       cache_store.write(version_cache_key, version, expires_in: expires_in)
+      version
     end
     alias init_version update_version
 
@@ -74,10 +111,6 @@ module ArCache
       "#{whole_cache_key_prefix}:#{version}:#{where_value}"
     end
 
-    def index_columns
-      @index_columns ||= unique_indexes.flatten.unshift(primary_key)
-    end
-
     def attributes_for_database(record, columns = column_names, previous: false)
       return columns.index_with { |column| record.send(:attribute_for_database, column) } unless previous
 
@@ -95,26 +128,6 @@ module ArCache
       return klass.instantiate(attributes, &block) if attributes.key?(inheritance_column)
 
       klass.send(:instantiate_instance_of, klass, attributes, &block)
-    end
-
-    private def normalize_unique_indexes(unique_indexes) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-      @unique_indexes = if unique_indexes
-                          Array.wrap(unique_indexes).map do |index|
-                            Array.wrap(index).map do |column|
-                              column = column.to_s.tap do |name|
-                                unless column_names.include?(name)
-                                  raise ArgumentError, "The #{column.inspect} is not in #{klass.name}.column_names"
-                                end
-                              end
-                            end.uniq
-                          end.uniq
-                        else
-                          ::ActiveRecord::Base.connection.indexes(table_name).filter_map do |index|
-                            index.columns if index.unique && index.columns.none? { |column| columns_hash[column].null }
-                          end
-                        end
-
-      @unique_indexes = (@unique_indexes - [primary_key]).sort_by(&:size).unshift([primary_key]).freeze
     end
   end
 end

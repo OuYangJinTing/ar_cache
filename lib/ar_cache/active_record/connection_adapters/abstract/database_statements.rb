@@ -31,47 +31,25 @@ module ArCache
           end
         end
 
-        private def update_ar_cache_version(arel_or_sql_or_table_name)
+        private def update_ar_cache_version(arel_or_sql_or_table_name) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
           if arel_or_sql_or_table_name.is_a?(Arel::TreeManager)
-            update_ar_cache_version_by_arel(arel_or_sql_or_table_name)
-          elsif arel_or_sql_or_table_name.include?(' ')
-            update_ar_cache_version_by_sql(arel_or_sql_or_table_name)
+            # arel.ast.relation may be of the following types:
+            #   - Arel::Nodes::JoinSource
+            #   - Arel::Table
+            arel = arel_or_sql_or_table_name
+            arel_table = arel.ast.relation.is_a?(Arel::Table) ? arel.ast.relation : arel.ast.relation.left
+            model = arel_table.instance_variable_get(:@klass).ar_cache_model
+            return if model.disabled?
+
+            where_clause = ArCache::WhereClause.new(model, arel.ast.wheres)
+            model.update_version unless where_clause.delete_cache_keys
+          elsif arel_or_sql_or_table_name.include?(' ') # is sql
+            sql = arel_or_sql_or_table_name.downcase
+            ArCache::Model.all.each { |m| m.update_version if sql.include?(m.table_name) }
           else # is table_name
-            update_ar_cache_version_by_table_name(arel_or_sql_or_table_name)
+            table_name = arel_or_sql_or_table_name
+            ArCache::Model.all.each { |m| m.update_version if m.table_name == table_name }
           end
-        end
-
-        private def update_ar_cache_version_by_arel(arel)
-          # arel.ast.relation may be of the following types:
-          #   - Arel::Nodes::JoinSource
-          #   - Arel::Table
-          arel_table = arel.ast.relation.is_a?(Arel::Table) ? arel.ast.relation : arel.ast.relation.left
-          ar_cache_model = arel_table.instance_variable_get(:@klass).ar_cache_model
-          return if ar_cache_model.disabled?
-
-          where_clause = ArCache::WhereClause.new(ar_cache_model, arel.ast.wheres)
-          ar_cache_model.update_version unless where_clause.delete_cache_keys
-        end
-
-        private def update_ar_cache_version_by_sql(sql)
-          sql = sql.downcase
-
-          ::ActiveRecord::Base.descendants.each do |klass|
-            next unless klass.table_name
-            next unless klass.base_class?
-            next unless sql.include?(klass.table_name)
-
-            klass.ar_cache_model.update_version
-          end
-        end
-
-        private def update_ar_cache_version_by_table_name(table_name)
-          klass = table_name.classify.safe_constantize
-          unless klass && klass < ActiveRecord::Base
-            klass = ActiveRecord::Base.descendants.find { |k| k.table_name == table_name }
-          end
-
-          klass&.ar_cache_model&.update_version
         end
       end
     end

@@ -11,7 +11,8 @@ matrix:
   allow_failures:
     - gemfile: gemfiles/rails-edge
 before_install: gem install bundler -v 2.2.3 && bundle install
-script: bundle exec rake
+script: bundle exec rake test
+after_script: bundle exec rubocop
 notifications:
   email: false
 ...

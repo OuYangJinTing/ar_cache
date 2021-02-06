@@ -5,7 +5,7 @@ module ArCache
     def write(*records) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       return unless enabled?
       return unless column_names == records.first&.attribute_names
-      return unless records.first&.id?
+      return unless records.first&.id
 
       records_attributes = records.each_with_object({}) do |record, attributes_cache_hash|
         attributes = attributes_for_database(record)
