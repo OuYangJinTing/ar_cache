@@ -8,7 +8,7 @@ module ArCache
         # def execute(sql, name = nil)
         # end
 
-        # upsert_all use this method
+        # upsert_all use this method, so need update cache version
         def exec_insert_all(sql, name)
           super.tap { update_ar_cache_version(sql) }
         end

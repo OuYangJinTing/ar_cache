@@ -3,6 +3,7 @@ PATH
   specs:
     ar_cache (0.1.0)
       activerecord (>= 6.1, < 7)
+      activesupport (>= 6.1, < 7)
 
 GEM
   remote: https://rubygems.org/
@@ -97,6 +98,9 @@ GEM
     pry (0.13.1)
       coderay (~> 1.1)
       method_source (~> 1.0)
+    pry-doc (1.1.0)
+      pry (~> 0.11)
+      yard (~> 0.9.11)
     racc (1.5.2)
     rack (2.2.3)
     rack-test (1.1.0)
@@ -169,6 +173,7 @@ GEM
     websocket-driver (0.7.3)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    yard (0.9.26)
     zeitwerk (2.4.2)
 
 PLATFORMS
@@ -179,6 +184,7 @@ DEPENDENCIES
   database_cleaner
   minitest
   pry
+  pry-doc
   rails
   rake
   rubocop

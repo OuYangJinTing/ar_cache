@@ -37,12 +37,12 @@ module ArCache
       ''
     end
 
-    def cache_key(*)
+    def primary_cache_key(*)
       ''
     end
 
-    def attributes_for_database(*)
-      {}
+    def cache_key(*)
+      ''
     end
 
     def instantiate(*)

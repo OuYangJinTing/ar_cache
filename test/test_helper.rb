@@ -97,9 +97,10 @@ User.find(1).create_account(username: 1, password: 1)
 User.find(1).create_identity(num: 1)
 
 User.find(1, 2, 3)
-User.ar_cache_model.delete(User.find(3))
+User.ar_cache_model.delete(User.find(3).id)
 User.where(name: %i[ouyang1 ouyang3], status: 0).to_a
 User.includes(:account, :identity).where(id: 1).to_a
 User.find(1).account
 Account.find(1).user
 Account.find(1).identity
+binding.pry

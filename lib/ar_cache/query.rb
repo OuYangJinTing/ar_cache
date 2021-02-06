@@ -21,8 +21,9 @@ module ArCache
                relation.arel
              end
 
-      # TODO: We should writy cache at ActiveRecord::Result instantiation
-      records += relation.find_by_sql(arel, &block).tap { |rs| model.write(*rs) } if arel
+      if arel
+        records += relation.find_by_sql(arel, &block).tap { |rs| model.write(rs) if relation.select_values.empty? }
+      end
 
       records_order(records)
     end

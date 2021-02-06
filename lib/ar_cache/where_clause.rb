@@ -51,10 +51,11 @@ module ArCache
     # Please use this method if is single?
     def cache_key
       return @cache_key if defined?(@cache_key)
+      return @cache_key = model.primary_cache_key(where_values_hash[model.primary_key]) if primary_key_index?
 
       @cache_key = model.cache_key(where_values_hash, @index)
       @original_cache_key = @cache_key
-      @cache_key = cache_store.read(@cache_key) unless primary_key_index?
+      @cache_key = cache_store.read(@cache_key)
       @cache_key
     end
 
@@ -63,12 +64,14 @@ module ArCache
       return @cache_keys_hash if defined?(@cache_keys_hash)
 
       @cache_keys_hash = {}
-      where_values_hash[@multi_values_key].each do |value|
-        model.cache_key(where_values_hash, @index, @multi_values_key, value).tap { |k| @cache_keys_hash[k] = value }
-      end
-      @original_cache_keys_hash = @cache_keys_hash
 
-      unless primary_key_index?
+      if primary_key_index?
+        where_values_hash[model.primary_key].each { |v| @cache_keys_hash[model.primary_cache_key(v)] = v }
+      else
+        where_values_hash[@multi_values_key].each do |v|
+          @cache_keys_hash[model.cache_key(where_values_hash, @index, @multi_values_key, v)] = v
+        end
+        @original_cache_keys_hash = @cache_keys_hash
         @cache_keys_hash = cache_store.read_multi(*@cache_keys_hash.keys)
         @original_cache_keys_hash.each { |k, v| @missed_values << v unless @cache_keys_hash.key?(k) }
         @cache_keys_hash = @cache_keys_hash.invert
@@ -83,7 +86,7 @@ module ArCache
 
     def add_missed_values(key)
       if primary_key_index?
-        @missed_values << @original_cache_keys_hash[key]
+        @missed_values << @cache_keys_hash[key]
       else
         @missed_values << @original_cache_keys_hash[@cache_keys_hash[key]]
       end

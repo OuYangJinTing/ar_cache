@@ -7,6 +7,7 @@ ActiveRecord::Base.connection.create_table(:users, force: :cascade) do |t|
   t.integer :role,         null: false, default: 0
   t.integer :books_count,  null: false, default: 0
   t.integer :images_count, null: false, default: 0
+  t.date    :last_sign_at
   t.text    :interest
   t.text    :useless
 

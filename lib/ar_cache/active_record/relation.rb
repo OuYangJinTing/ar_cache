@@ -7,6 +7,11 @@ module ArCache
         tap { @skip_ar_cache = true }
       end
 
+      def explain
+        @skip_ar_cache = true
+        super
+      end
+
       private def exec_queries(&block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
         skip_query_cache_if_necessary do
           records = if where_clause.contradiction?
@@ -21,7 +26,7 @@ module ArCache
                           join_dependency.instantiate(rows, strict_loading_value, &block)
                         end.freeze
                       end
-                    elsif @skip_ar_cache || klass.ar_cache_model.disabled? # || ::ActiveRecord::ExplainRegistry.collect?
+                    elsif @skip_ar_cache || klass.ar_cache_model.disabled?
                       klass.find_by_sql(arel, &block).freeze
                     else
                       ArCache::Query.new(self).exec_queries(&block).freeze

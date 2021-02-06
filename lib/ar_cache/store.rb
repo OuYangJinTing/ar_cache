@@ -2,21 +2,17 @@
 
 module ArCache
   module Store
-    def write(*records) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-      return unless enabled?
-      return unless column_names == records.first&.attribute_names
-      return unless records.first&.id
-
+    def write(records)
       records_attributes = records.each_with_object({}) do |record, attributes_cache_hash|
-        attributes = attributes_for_database(record)
+        attributes = column_names.index_with { |column| record.send(:attribute_for_database, column) }
 
-        primary_cache_key = nil
+        key = nil
         unique_indexes.each_with_index do |index, i|
           if i.zero?
-            primary_cache_key = cache_key(attributes, [primary_key])
-            attributes_cache_hash[primary_cache_key] = attributes
+            key = primary_cache_key(attributes[primary_key])
+            attributes_cache_hash[key] = attributes
           else
-            attributes_cache_hash[cache_key(attributes, index)] = primary_cache_key
+            attributes_cache_hash[cache_key(attributes, index)] = key
           end
         end
       end
@@ -24,15 +20,8 @@ module ArCache
       cache_store.write_multi(records_attributes, expires_in: expires_in)
     end
 
-    def delete(*records, previous: false)
-      return if disabled?
-
-      cache_keys = records.each_with_object([]) do |record, keys|
-        attributes = attributes_for_database(record, index_columns, previous: previous)
-        unique_indexes.each { |index| keys << cache_key(attributes, index) }
-      end
-
-      cache_store.delete_multi(cache_keys)
+    def delete(id)
+      cache_store.delete(primary_cache_key(id))
     end
 
     def read_records(where_clause, select_values, &block)

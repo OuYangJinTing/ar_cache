@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'active_support/all' # TODO: Should only required necessary modules
+require 'active_support/cache'
 require 'active_record'
 
 require 'ar_cache/version'

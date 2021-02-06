@@ -6,7 +6,7 @@ module ArCache
       extend ActiveSupport::Concern
 
       included do
-        after_commit(on: :create, prepend: true) { ar_cache_model.write(self) }
+        after_commit(on: :create, prepend: true) { ar_cache_model.write([self]) if ar_cache_model.enabled? }
       end
     end
   end

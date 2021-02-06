@@ -47,6 +47,6 @@ module ArCache
     @disabled = false
     @select_disabled = true
     @cache_key_prefix = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'unknwon'
-    @expires_in = 1.week
+    @expires_in = 604800 # 1 week
   end
 end

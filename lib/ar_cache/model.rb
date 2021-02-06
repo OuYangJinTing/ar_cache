@@ -101,6 +101,10 @@ module ArCache
       "#{whole_cache_key_prefix}:version"
     end
 
+    def primary_cache_key(id)
+      "#{whole_cache_key_prefix}:#{version}:#{primary_key}=#{id}"
+    end
+
     def cache_key(where_values_hash, index, multi_values_key = nil, key_value = nil)
       where_value = index.map do |column|
         value = column == multi_values_key ? key_value : where_values_hash[column]
@@ -109,19 +113,6 @@ module ArCache
       end.sort.join('&')
 
       "#{whole_cache_key_prefix}:#{version}:#{where_value}"
-    end
-
-    def attributes_for_database(record, columns = column_names, previous: false)
-      return columns.index_with { |column| record.send(:attribute_for_database, column) } unless previous
-
-      changes = record.previous_changes
-      columns.index_with do |column|
-        if changes.key?(column)
-          record.instance_variable_get(:@attributes).send(:attributes)[column].type.serialize(values.first)
-        else
-          record.send(:attribute_for_database, column)
-        end
-      end
     end
 
     def instantiate(attributes, &block)
