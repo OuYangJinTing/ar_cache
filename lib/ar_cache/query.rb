@@ -2,27 +2,28 @@
 
 module ArCache
   class Query
-    attr_reader :relation, :model, :where_clause
+    attr_reader :relation, :table, :where_clause
 
     def initialize(relation)
       @relation = relation
-      @model = relation.klass.ar_cache_model
-      @where_clause = ArCache::WhereClause.new(@model, relation.where_clause.send(:predicates))
+      @table = @relation.klass.ar_cache_table
+      @where_clause = ArCache::WhereClause.new(@relation.klass, @relation.where_clause.send(:predicates))
     end
 
     def exec_queries(&block)
       return relation.skip_ar_cache.send(:exec_queries, &block) unless exec_queries_cacheable?
 
-      records = model.read_records(where_clause, @select_values, &block)
+      records = table.read(where_clause, @select_values, &block)
 
-      arel = if where_clause.missed_hash.any?
-               relation.rewhere(where_clause.missed_hash).arel
-             elsif records.empty?
-               relation.arel
-             end
+      missed_relation = if records.empty?
+        relation
+      elsif where_clause.missed_hash.any?
+        relation.rewhere(where_clause.missed_hash)
+      end
 
-      if arel
-        records += relation.find_by_sql(arel, &block).tap { |rs| model.write(rs) if relation.select_values.empty? }
+      if missed_relation
+        missed_relation = missed_relation.select(table.column_names) if table.ignored_columns.any? || true
+        records += relation.find_by_sql(missed_relation.arel, &block)
       end
 
       records_order(records)
@@ -45,13 +46,13 @@ module ArCache
 
     private def select_values_cacheable?
       return true if relation.select_values.empty?
-      return false if model.select_disabled?
+      return false if table.select_disabled?
 
       @select_values = relation.select_values.map(&:to_s)
-      (@select_values - relation.klass.column_names).empty?
+      (@select_values - table.column_names).empty?
     end
 
-    private def order_values_cacheable? # rubocop:disable Metrics/CyclomaticComplexity
+    private def order_values_cacheable?
       return true if where_clause.single?
 
       size = relation.order_values.size
@@ -61,20 +62,18 @@ module ArCache
       first_order_value = relation.order_values.first
       case first_order_value
       when Arel::Nodes::Ordering
-        return false unless relation.klass.column_names.include?(first_order_value.expr.name)
-
         @order_name = first_order_value.expr.name
         @order_desc = first_order_value.descending?
-        return true
       when String
         @order_name, @order_desc = first_order_value.downcase.split
-        return false unless relation.klass.column_names.include?(@order_name)
+        return false unless table.column_names.include?(@order_name)
 
         @order_desc = @order_desc == 'desc'
-        return true
+      else
+        return false
       end
 
-      false
+      true
     end
 
     private def limit_value_cacheable?
@@ -83,8 +82,9 @@ module ArCache
 
     private def records_order(records)
       return records if records.size < 2
+      return records if @order_name.nil?
 
-      method = "#{@order_name || model.primary_key}_for_database"
+      method = "#{@order_name}_for_database"
       return records.sort! { |a, b| b.send(method) <=> a.send(method) } if @order_desc
 
       records.sort! { |a, b| a.send(method) <=> b.send(method) }

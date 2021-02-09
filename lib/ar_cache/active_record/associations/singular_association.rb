@@ -5,10 +5,12 @@ module ArCache
     module Associations
       module SingularAssociation
         private def skip_statement_cache?(scope)
-          # Polymorphic associations do not support computing the class.
-          return super if is_a?(::ActiveRecord::Associations::BelongsToPolymorphicAssociation)
+          # Polymorphic associations do not support computing the class, so can't judge ArCache status.
+          # But SingularAssociation query usually can hit the unique index, so here return true directly.
+          return true if is_a?(::ActiveRecord::Associations::BelongsToPolymorphicAssociation)
+          return true if reflection.klass.ar_cache_table.enabled?
 
-          reflection.klass.ar_cache_model.enabled? || super
+          super
         end
       end
     end

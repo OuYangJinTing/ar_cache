@@ -11,17 +11,13 @@ ArCache.configure do |config|
   # Default: true
   # config.select_disabled = Boolean
 
-  # Default: ENV['RAILS_ENV'] || ENV['RACK_ENV'] || 'unknwon'
-  # config.cache_key_prefix = String
-
   # Default: 1.week
   # config.expires_in = Numeric
 
-  # config.models_options = {
+  # config.tables_options = {
   #   table_name: {
   #     disabled: Boolean,
   #     select_disabled: Boolean,
-  #     cache_key_prefix: String,
   #     expires_in: Numeric,
   #     unique_indexes: Array # The primary key is used by default
   #   }

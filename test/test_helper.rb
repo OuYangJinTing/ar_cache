@@ -60,12 +60,14 @@ ArCache.configure do |config|
 end
 
 # TODO: Auto perform lib/generators/ar_cache/templates/migrate/create_ar_cache_monitors.rb.tt
-ActiveRecord::Base.connection.create_table(:ar_cache_monitors, force: :cascade) do |t|
+ActiveRecord::Base.connection.create_table(:ar_cache_records, force: :cascade) do |t|
   t.string  :table_name,      null: false
+  t.string  :table_sha1,      null: false, limit: 40
   t.integer :version,         null: false, default: 0
   t.integer :lock_version,    null: false, default: 0
   t.boolean :disabled,        null: false
   t.string  :unique_indexes,  limit: 1000
+  t.string  :ignored_columns, limit: 1000
 
   t.index   :table_name, unique: true
 end
@@ -80,15 +82,15 @@ require 'models/book'
 require 'models/animal'
 require 'models/image'
 
-ArCache::Monitor.ar_cache_model
-User.ar_cache_model
-Image.ar_cache_model
-Identity.ar_cache_model
-Book.ar_cache_model
-Animal.ar_cache_model
-Cat.ar_cache_model
-Dog.ar_cache_model
-Account.ar_cache_model
+ArCache::Record.ar_cache_table
+User.ar_cache_table
+Image.ar_cache_table
+Identity.ar_cache_table
+Book.ar_cache_table
+Animal.ar_cache_table
+Cat.ar_cache_table
+Dog.ar_cache_table
+Account.ar_cache_table
 
 User.create(name: :ouyang1, email: :ouyang1)
 User.create(name: :ouyang2, email: :ouyang2)
@@ -96,11 +98,13 @@ User.create(name: :ouyang3, email: :ouyang3)
 User.find(1).create_account(username: 1, password: 1)
 User.find(1).create_identity(num: 1)
 
-User.find(1, 2, 3)
-User.ar_cache_model.delete(User.find(3).id)
-User.where(name: %i[ouyang1 ouyang3], status: 0).to_a
-User.includes(:account, :identity).where(id: 1).to_a
-User.find(1).account
-Account.find(1).user
-Account.find(1).identity
+# User.find(1, 2, 3)
+# User.find(1, 2, 3)
+User.ar_cache_table.delete(3)
 binding.pry
+# User.where(name: %i[ouyang1 ouyang3], status: 0).to_a
+# User.includes(:account, :identity).where(id: 1).to_a
+# User.find(1).account
+# Account.find(1).user
+# Account.find(1).identity
+# ActiveRecord::Base.logger = Logger.new($stdout)

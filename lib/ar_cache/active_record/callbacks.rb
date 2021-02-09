@@ -6,7 +6,7 @@ module ArCache
       extend ActiveSupport::Concern
 
       included do
-        after_commit(on: :create, prepend: true) { ar_cache_model.write([self]) if ar_cache_model.enabled? }
+        after_commit(on: %i[update destroy], prepend: true) { ar_cache_table.delete(id) }
       end
     end
   end
