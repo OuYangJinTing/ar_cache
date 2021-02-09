@@ -10,7 +10,7 @@ module ArCache
     singleton_class.delegate :each, to: :@all
     singleton_class.attr_reader :all
 
-    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names,
+    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :sha1,
                 :ignored_columns, :cache_key_prefix
 
     delegate :connection, to: ActiveRecord::Base, private: true
@@ -35,8 +35,9 @@ module ArCache
       options.each { |k, v| instance_variable_set("@#{k}", v) }
       @column_names = (columns.map(&:name) - @ignored_columns).freeze
       @column_indexes = @unique_indexes.flatten.freeze
+      @sha1 = Digest::SHA1.hexdigest(columns.to_json)
 
-      init_version(ArCache::Record.store(self, Digest::SHA1.hexdigest(columns.to_json)).version)
+      init_version(ArCache::Record.store(self).version)
 
       self.class.all << self
     end
@@ -58,13 +59,13 @@ module ArCache
     end
 
     def version
-      ArCache::Store.fetch(cache_key_prefix) { ArCache::Record.version(name) }
+      ArCache::Store.fetch(cache_key_prefix) { ArCache::Record.version(self) }
     end
 
     def update_version(version = nil)
       return -1 if disabled?
 
-      version ||= ArCache::Record.update_version(name)
+      version ||= ArCache::Record.update_version(self)
       ArCache::Store.write(cache_key_prefix, version)
     end
     alias init_version update_version

@@ -32,7 +32,7 @@ module ArCache
       end
 
       def cache_key(...)
-       ''
+        ''
       end
 
       def write(...)

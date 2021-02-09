@@ -24,7 +24,7 @@ module ArCache
               owner.send(reflection.through_reflection.name)
             end
           # NOTE: If scope depend on other table, the query will raise ActiveRecord::StatementInvalid.
-          rescue ActiveRecord::StatementInvalid
+          rescue ::ActiveRecord::StatementInvalid
             super
           end
           return nil if !through_record || through_record.destroyed?

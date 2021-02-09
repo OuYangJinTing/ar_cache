@@ -5,14 +5,16 @@ module ArCache
     module Table
       module ClassMethods
         def table_name=(...)
-          super.tap { remove_instance_variable(:@ar_cache_table) if defined?(@ar_cache_table) }
+          super.tap { @ar_cache_table = nil }
         end
 
         def ar_cache_table
-          return @ar_cache_table if defined?(@ar_cache_table)
-
-          @ar_cache_table = begin
-            abstract_class? ? ArCache::MockTable : ArCache::Table.new(table_name)
+          @ar_cache_table ||= begin
+            if abstract_class? || self == ArCache::Record
+              ArCache::MockTable
+            else
+              ArCache::Table.new(table_name)
+            end
           rescue ::ActiveRecord::StatementInvalid # The table may not exist
             ArCache::MockTable
           end

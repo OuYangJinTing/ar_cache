@@ -13,25 +13,27 @@ module ArCache
       find_by(table_name: table_name)
     end
 
-    def self.version(table_name)
-      get(table_name).version
+    def self.version(table)
+      (get(table.name) || store(table)).version
     end
 
-    def self.update_version(table_name)
-      record = get(table_name)
+    def self.update_version(table)
+      record = get(table.name)
+      return store(table).version unless record
+
       record.update_version
       record.version
     end
 
-    def self.store(table, table_sha1)
+    def self.store(table)
       record = get(table.name) || new(table_name: table.name)
-      record.store(table, table_sha1)
+      record.store(table)
       record
     end
 
-    def store(table, table_sha1)
+    def store(table)
       with_optimistic_retry do
-        if self.table_sha1 != table_sha1 ||
+        if table_sha1 != table.sha1 ||
            disabled? != table.disabled? ||
            (unique_indexes - table.unique_indexes).any? ||
            (ignored_columns - table.ignored_columns).any?
@@ -39,7 +41,7 @@ module ArCache
           self.version += 1
         end
 
-        self.table_sha1 = table_sha1
+        self.table_sha1 = table.sha1
         self.disabled = table.disabled?
         self.unique_indexes = table.unique_indexes
         self.ignored_columns = table.ignored_columns
