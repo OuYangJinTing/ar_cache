@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'json'
+require 'yaml'
 
 module ArCache
   class Configuration
@@ -49,7 +49,7 @@ module ArCache
     # The set default values
     @cache_store = defined?(Rails) ? Rails.cache : ActiveSupport::Cache::MemoryStore.new
     @tables_options = {}
-    @coder = ::JSON
+    @coder = ::YAML
     @disabled = false
     @select_disabled = true
     @expires_in = 604_800 # 1 week

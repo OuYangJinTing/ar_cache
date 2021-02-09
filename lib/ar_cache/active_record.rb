@@ -5,6 +5,7 @@ require 'ar_cache/active_record/callbacks'
 require 'ar_cache/active_record/relation'
 require 'ar_cache/active_record/querying'
 require 'ar_cache/active_record/persistence'
+require 'ar_cache/active_record/transactions'
 require 'ar_cache/active_record/associations/singular_association'
 require 'ar_cache/active_record/associations/has_one_through_association'
 require 'ar_cache/active_record/connection_adapters/abstract/database_statements'
@@ -21,6 +22,8 @@ ActiveSupport.on_load(:active_record, run_once: true) do
 
   ActiveRecord::Associations::SingularAssociation.prepend(ArCache::ActiveRecord::Associations::SingularAssociation)
   ActiveRecord::Associations::HasOneThroughAssociation.prepend(ArCache::ActiveRecord::Associations::HasOneThroughAssociation)
+
+  ActiveRecord::Transactions.prepend(ArCache::ActiveRecord::Transactions)
 
   ActiveRecord::ConnectionAdapters::DatabaseStatements.prepend(ArCache::ActiveRecord::ConnectionAdapters::DatabaseStatements)
 end

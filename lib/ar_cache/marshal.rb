@@ -2,7 +2,7 @@
 
 module ArCache
   module Marshal
-    def write(hash_rows)
+    def write(hash_rows) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return -1 if disabled?
       return -1 if ignored_columns.any? && (column_names - hash_rows.first.keys).any?
 
@@ -22,6 +22,8 @@ module ArCache
       end
 
       ArCache::Store.write_multi(cache_hash)
+    rescue Encoding::UndefinedConversionError
+      0
     end
 
     def delete(id)

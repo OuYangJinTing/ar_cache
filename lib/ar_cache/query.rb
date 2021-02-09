@@ -82,9 +82,8 @@ module ArCache
 
     private def records_order(records)
       return records if records.size < 2
-      return records if @order_name.nil?
 
-      method = "#{@order_name}_for_database"
+      method = "#{@order_name || table.primary_key}_for_database"
       return records.sort! { |a, b| b.send(method) <=> a.send(method) } if @order_desc
 
       records.sort! { |a, b| a.send(method) <=> b.send(method) }

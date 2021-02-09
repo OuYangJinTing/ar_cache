@@ -43,11 +43,11 @@ module ArCache
     end
 
     def disabled?
-      @disabled
+      primary_key.nil? || @disabled
     end
 
     def enabled?
-      !@disabled
+      !disabled?
     end
 
     def select_disabled?

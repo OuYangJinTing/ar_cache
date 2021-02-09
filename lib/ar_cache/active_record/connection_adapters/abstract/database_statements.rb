@@ -27,7 +27,9 @@ module ArCache
         end
 
         private def update_ar_cache_version(arel_or_sql_string)
-          return if current_transaction.open?
+          # NOTE: ActiveRecord::FixtureSet default use transaction, it called #begin_transaction method.
+          #       So we can't use current_transaction.open? skip update ArCahe version.
+          return if @skip_update_ar_cache_version
 
           if arel_or_sql_string.is_a?(String)
             update_ar_cache_version_by_sql(arel_or_sql_string)
