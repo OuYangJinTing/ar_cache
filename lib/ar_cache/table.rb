@@ -95,6 +95,8 @@ module ArCache
                     end
 
                     index.columns
+                  rescue NoMethodError # The index.columns maybe is String type
+                    next
                   end
                 else
                   indexes.each do |index|

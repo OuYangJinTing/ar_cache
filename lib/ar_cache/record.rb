@@ -55,7 +55,7 @@ module ArCache
       end
     end
 
-    def with_optimistic_retry
+    private def with_optimistic_retry
       yield
     rescue ::ActiveRecord::StaleObjectError
       reload

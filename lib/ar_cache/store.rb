@@ -2,9 +2,9 @@
 
 module ArCache
   class Store
-    class << self
-      @options = { raw: true, expires_in: ArCache::Configuration.expires_in }.freeze
+    @options = { raw: true, expires_in: ArCache::Configuration.expires_in }.freeze
 
+    class << self
       def write(name, value)
         ArCache::Configuration.cache_store.write(name, dump(value), @options)
       end
@@ -40,11 +40,11 @@ module ArCache
         ArCache::Configuration.cache_store.fetch(*names, @options, &block)
       end
 
-      def dump(value)
+      private def dump(value)
         ArCache::Configuration.coder.dump(value)
       end
 
-      def load(value)
+      private def load(value)
         ArCache::Configuration.coder.load(value)
       end
     end
