@@ -11,7 +11,7 @@ module ArCache
       @missed_values = []
     end
 
-    def cacheable?
+    def cacheable? # rubocop:disable Metrics/CyclomaticComplexity
       return false if predicates.empty?
       return false if where_values_hash.length != predicates.length
 
@@ -134,13 +134,13 @@ module ArCache
 
       private def extract_node_value(node)
         value = case node
-        when Array
-          node.map { |v| extract_node_value(v) }
-        when Arel::Nodes::BindParam
-          node.value.value_for_database # Maybe raise ActiveModel::RangeError
-        when Arel::Nodes::Casted, Arel::Nodes::Quoted
-          node.value_for_database # Maybe raise ActiveModel::RangeError
-        end
+                when Array
+                  node.map { |v| extract_node_value(v) }
+                when Arel::Nodes::BindParam
+                  node.value.value_for_database # Maybe raise ActiveModel::RangeError
+                when Arel::Nodes::Casted, Arel::Nodes::Quoted
+                  node.value_for_database # Maybe raise ActiveModel::RangeError
+                end
 
         value.is_a?(Date) ? value.to_s : value
       end

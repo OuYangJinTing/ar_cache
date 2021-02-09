@@ -101,7 +101,6 @@ User.find(1).create_identity(num: 1)
 # User.find(1, 2, 3)
 # User.find(1, 2, 3)
 User.ar_cache_table.delete(3)
-binding.pry
 # User.where(name: %i[ouyang1 ouyang3], status: 0).to_a
 # User.includes(:account, :identity).where(id: 1).to_a
 # User.find(1).account

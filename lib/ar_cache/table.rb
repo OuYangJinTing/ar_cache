@@ -83,26 +83,29 @@ module ArCache
       "#{cache_key_prefix}:#{version}:#{where_value}"
     end
 
-    private def normalize_unique_indexes(indexes, columns)
+    private def normalize_unique_indexes(indexes, columns) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       indexes = if indexes.empty?
-        connection.indexes(name).filter_map do |index|
-          next unless index.unique
-          index.columns.each do |column|
-            column = columns.find { |c| c.name == column }
-            next if column.null
-            next if column.type == :datetime
-          end
-          index.columns
-        end
-      else
-        indexes.each do |index|
-          index.each do |column|
-            if columns.find { |c| c.name == column }.type == :datetime
-              raise ArgumentError, "The #{column.inspect} is datetime type, ArCache do't support datetime type"
-            end
-          end
-        end
-      end
+                  connection.indexes(name).filter_map do |index|
+                    next unless index.unique
+
+                    index.columns.each do |column|
+                      column = columns.find { |c| c.name == column }
+                      next if column.null
+                      next if column.type == :datetime
+                    end
+
+                    index.columns
+                  end
+                else
+                  indexes.each do |index|
+                    index.each do |column|
+                      if columns.find { |c| c.name == column }.type == :datetime
+                        raise ArgumentError,
+                              "The #{column.inspect} is datetime type, ArCache do't support datetime type"
+                      end
+                    end
+                  end
+                end
 
       (indexes - [primary_key]).sort_by(&:size).unshift([primary_key]).freeze
     end

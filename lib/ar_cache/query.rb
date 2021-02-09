@@ -16,13 +16,13 @@ module ArCache
       records = table.read(where_clause, @select_values, &block)
 
       missed_relation = if records.empty?
-        relation
-      elsif where_clause.missed_hash.any?
-        relation.rewhere(where_clause.missed_hash)
-      end
+                          relation
+                        elsif where_clause.missed_hash.any?
+                          relation.rewhere(where_clause.missed_hash)
+                        end
 
       if missed_relation
-        missed_relation = missed_relation.select(table.column_names) if table.ignored_columns.any? || true
+        missed_relation = missed_relation.select(table.column_names) if table.ignored_columns.any?
         records += relation.find_by_sql(missed_relation.arel, &block)
       end
 

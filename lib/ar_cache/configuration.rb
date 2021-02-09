@@ -5,7 +5,7 @@ require 'json'
 module ArCache
   class Configuration
     singleton_class.attr_accessor :disabled, :select_disabled, :expires_in
-    singleton_class.attr_reader :cache_store, :tables_options, :coder,
+    singleton_class.attr_reader :cache_store, :tables_options, :coder
 
     def self.configure
       block_given? ? yield(self) : self
@@ -33,6 +33,7 @@ module ArCache
 
     def self.coder=(coder)
       raise ArgumentError, 'The coder only support use YAML or JSON' unless [::YAML, ::JSON].include?(coder)
+
       @coder = coder
     end
 
