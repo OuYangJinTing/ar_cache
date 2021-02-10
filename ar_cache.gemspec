@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['OuYangJinTing']
   spec.email         = ['2729877005qq@gmail.com']
 
-  spec.summary       = 'A Write-Through Cacheing Library for ActiveRecord inspired by cache-money and second_level_cache.' # rubocop:disable Layout/LineLength
+  spec.summary       = 'A modern cacheing library for ActiveRecord inspired by cache-money and second_level_cache.'
   spec.description   = spec.summary
   spec.homepage      = 'https://github.com/OuYangJinTing/ar_cache'
   spec.license       = 'MIT'

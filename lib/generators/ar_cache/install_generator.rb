@@ -15,7 +15,7 @@ module ArCache
       def copy_initializer_file
         copy_file 'configuration.rb', 'config/initializers/ar_cache.rb'
 
-        migration_template 'migrate/create_ar_cache_monitors.rb', 'db/migrate/create_ar_cache_monitors.rb'
+        migration_template 'migrate/create_ar_cache_records.rb', 'db/migrate/create_ar_cache_records.rb'
       end
     end
   end

@@ -101,8 +101,6 @@ module ArCache
     module Raw
       def where_values_hash
         @where_values_hash ||= equalities(predicates).each_with_object({}) do |node, hash|
-          # Arel::Nodes::NamedFunction without relation method
-          # FIXME: delete or update skip?
           next if table.name != node.left.relation.name
 
           name = node.left.name.to_s

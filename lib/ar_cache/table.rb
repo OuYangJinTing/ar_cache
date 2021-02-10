@@ -33,6 +33,7 @@ module ArCache
       options = ArCache::Configuration.get_table_options(@name)
       @unique_indexes = normalize_unique_indexes(options.delete(:unique_indexes), columns).freeze
       options.each { |k, v| instance_variable_set("@#{k}", v) }
+      @disabled = true if @primary_key.nil? # ArCache is depend on primary key implementation.
       @column_names = (columns.map(&:name) - @ignored_columns).freeze
       @column_indexes = @unique_indexes.flatten.freeze
       @sha1 = Digest::SHA1.hexdigest(columns.to_json)
@@ -43,7 +44,7 @@ module ArCache
     end
 
     def disabled?
-      primary_key.nil? || @disabled
+      @disabled
     end
 
     def enabled?

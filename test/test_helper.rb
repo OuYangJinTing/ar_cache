@@ -59,17 +59,19 @@ ArCache.configure do |config|
   config.select_disabled = false
 end
 
-# TODO: Auto perform lib/generators/ar_cache/templates/migrate/create_ar_cache_monitors.rb.tt
+# TODO: Auto perform lib/generators/ar_cache/templates/migrate/create_ar_cache_records.rb.tt
 ActiveRecord::Base.connection.create_table(:ar_cache_records, force: :cascade) do |t|
-  t.string  :table_name,      null: false
-  t.string  :table_sha1,      null: false, limit: 40
-  t.integer :version,         null: false, default: 0
-  t.integer :lock_version,    null: false, default: 0
-  t.boolean :disabled,        null: false
-  t.string  :unique_indexes,  limit: 1000
+  t.string  :table_name, null: false
+  t.string  :table_sha1, null: false, limit: 40
+  t.integer :version, null: false, default: 0
+  t.integer :lock_version, null: false, default: 0
+  t.boolean :disabled, null: false
+  t.string  :unique_indexes, limit: 1000
   t.string  :ignored_columns, limit: 1000
 
-  t.index   :table_name, unique: true
+  t.timestamps null: false
+
+  t.index :table_name, unique: true
 end
 
 require 'support/ar_cache_helper'
