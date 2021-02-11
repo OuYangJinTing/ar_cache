@@ -33,7 +33,7 @@ module ArCache
 
     def store(table)
       with_optimistic_retry do
-        if table_sha1 != table.sha1 ||
+        if table_md5 != table.md5 ||
            disabled? != table.disabled? ||
            (unique_indexes - table.unique_indexes).any? ||
            (ignored_columns - table.ignored_columns).any?
@@ -41,7 +41,7 @@ module ArCache
           self.version += 1
         end
 
-        self.table_sha1 = table.sha1
+        self.table_md5 = table.md5
         self.disabled = table.disabled?
         self.unique_indexes = table.unique_indexes
         self.ignored_columns = table.ignored_columns

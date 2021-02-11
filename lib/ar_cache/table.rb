@@ -10,7 +10,7 @@ module ArCache
     singleton_class.delegate :each, to: :@all
     singleton_class.attr_reader :all
 
-    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :sha1,
+    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :md5,
                 :ignored_columns, :cache_key_prefix
 
     delegate :connection, to: ActiveRecord::Base, private: true
@@ -36,7 +36,7 @@ module ArCache
       @disabled = true if @primary_key.nil? # ArCache is depend on primary key implementation.
       @column_names = (columns.map(&:name) - @ignored_columns).freeze
       @column_indexes = @unique_indexes.flatten.freeze
-      @sha1 = Digest::SHA1.hexdigest(columns.to_json)
+      @md5 = Digest::MD5.hexdigest(columns.to_json)
 
       init_version(ArCache::Record.store(self).version)
 
@@ -78,7 +78,7 @@ module ArCache
     def cache_key(where_values_hash, index, multi_values_key = nil, key_value = nil)
       where_value = index.map do |column|
         value = column == multi_values_key ? key_value : where_values_hash[column]
-        value = Digest::SHA1.hexdigest(value) if value.respond_to?(:size) && value.size > 40
+        value = Digest::MD5.hexdigest(value) if value.respond_to?(:size) && value.size > 64
         "#{column}=#{value}"
       end.sort.join('&')
 
