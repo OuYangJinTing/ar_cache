@@ -11,10 +11,14 @@ module ArCache
       @missed_values = []
     end
 
-    def cacheable? # rubocop:disable Metrics/CyclomaticComplexity
+    def cacheable?
       return false if predicates.empty?
       return false if where_values_hash.length != predicates.length
 
+      hit_unique_index?
+    end
+
+    def hit_unique_index?
       table.unique_indexes.each do |index|
         @index = index
         @multi_values_key = nil

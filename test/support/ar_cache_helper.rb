@@ -1,4 +1,7 @@
 # frozen_string_literal: true
 
-module ArCacheHelper
+class ArCacheHelper
+  class << self
+    # TODO
+  end
 end

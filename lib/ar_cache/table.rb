@@ -85,33 +85,38 @@ module ArCache
       "#{cache_key_prefix}:#{version}:#{where_value}"
     end
 
-    private def normalize_unique_indexes(indexes, columns) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-      indexes = if indexes.empty?
-                  connection.indexes(name).filter_map do |index|
-                    next unless index.unique
+    private def normalize_unique_indexes(indexes, columns)
+      indexes = indexes.empty? ? query_unique_indexes(columns) : custom_unique_indexes(indexes, columns)
+      (indexes - [primary_key]).sort_by(&:size).unshift([primary_key])
+    end
 
-                    index.columns.each do |column|
-                      column = columns.find { |c| c.name == column }
-                      next if column.null
-                      next if column.type == :datetime
-                    end
+    private def query_unique_indexes(columns) # rubocop:disable Metrics/CyclomaticComplexity
+      connection.indexes(name).filter_map do |index|
+        next unless index.unique
 
-                    index.columns
-                  rescue NoMethodError # The index.columns maybe is String type
-                    next
-                  end
-                else
-                  indexes.each do |index|
-                    index.each do |column|
-                      if columns.find { |c| c.name == column }.type == :datetime
-                        raise ArgumentError,
-                              "The #{column.inspect} is datetime type, ArCache do't support datetime type"
-                      end
-                    end
-                  end
-                end
+        index.columns.each do |column|
+          column = columns.find { |c| c.name == column }
+          next if column.null
+          next if column.type == :datetime
+        end
 
-      (indexes - [primary_key]).sort_by(&:size).unshift([primary_key]).freeze
+        index.columns
+      rescue NoMethodError # The index.columns maybe isn't Array type
+        next
+      end
+    end
+
+    private def custom_unique_indexes(indexes)
+      indexes.each do |index|
+        index.each do |column|
+          column = columns.find { |c| c.name == column }
+          raise ArgumentError, "The #{name} table not found #{column.inspect} column" if column.nil?
+
+          if column.type == :datetime
+            raise ArgumentError, "The #{column.inspect} is datetime type, ArCache do't support datetime type"
+          end
+        end
+      end
     end
   end
 end

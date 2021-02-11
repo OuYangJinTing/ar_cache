@@ -130,7 +130,6 @@ GEM
       thor (~> 1.0)
     rainbow (3.0.0)
     rake (13.0.3)
-    redis (4.2.2)
     regexp_parser (2.0.3)
     rexml (3.2.4)
     rubocop (1.9.0)
@@ -183,7 +182,6 @@ DEPENDENCIES
   pry
   rails
   rake
-  redis
   rubocop
   rubocop-minitest
   rubocop-performance

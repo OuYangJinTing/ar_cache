@@ -7,7 +7,6 @@ require 'ar_cache'
 require 'sqlite3'
 require 'database_cleaner'
 require 'minitest/autorun'
-require 'minitest/pride'
 
 # Use rails style test
 require 'active_support/testing/assertions'
@@ -62,10 +61,10 @@ end
 # TODO: Auto perform lib/generators/ar_cache/templates/migrate/create_ar_cache_records.rb.tt
 ActiveRecord::Base.connection.create_table(:ar_cache_records, force: :cascade) do |t|
   t.string  :table_name, null: false
-  t.string  :table_sha1, null: false, limit: 40
+  t.string  :table_sha1, null: false, limit: 40, default: '0' * 40
   t.integer :version, null: false, default: 0
   t.integer :lock_version, null: false, default: 0
-  t.boolean :disabled, null: false
+  t.boolean :disabled, null: false, default: false
   t.string  :unique_indexes, limit: 1000
   t.string  :ignored_columns, limit: 1000
 
