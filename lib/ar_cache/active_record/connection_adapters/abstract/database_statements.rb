@@ -28,7 +28,8 @@ module ArCache
 
         private def update_ar_cache_version(arel_or_sql_string)
           # NOTE: ActiveRecord::FixtureSet default use transaction, it called #begin_transaction method.
-          #       So we can't use current_transaction.open? skip update ArCahe version.
+          # So we can't use current_transaction.open? skip update ArCahe version.
+          # return if current_transaction.open?
           return if @skip_update_ar_cache_version
 
           if arel_or_sql_string.is_a?(String)
@@ -53,11 +54,11 @@ module ArCache
 
         private def update_ar_cache_version_by_sql(sql)
           sql = sql.downcase
-          ArCache::Table.each { |table| table.update_version if sql.include?(table.name) }
+          ArCache::Table.all.each { |table| table.update_version if sql.include?(table.name) }
         end
 
         private def update_ar_cache_version_by_table(table_name)
-          ArCache::Table.each { |table| table.update_version if table_name.casecmp?(table.name) }
+          ArCache::Table.all.each { |table| table.update_version if table_name.casecmp?(table.name) }
         end
       end
     end

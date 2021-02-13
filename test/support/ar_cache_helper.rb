@@ -2,6 +2,11 @@
 
 class ArCacheHelper
   class << self
-    # TODO
+    def savepoint
+      ActiveRecord::Base.connection.begin_transaction(joinable: false)
+      yield
+    ensure
+      ActiveRecord::Base.connection.rollback_transaction
+    end
   end
 end

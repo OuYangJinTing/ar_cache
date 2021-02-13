@@ -6,8 +6,6 @@ module ArCache
 
     OPTIONS = %i[disabled select_disabled unique_indexes ignored_columns].freeze
 
-    singleton_class.include Enumerable
-    singleton_class.delegate :each, to: :@all
     singleton_class.attr_reader :all
 
     attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :md5,
@@ -36,9 +34,9 @@ module ArCache
       @disabled = true if @primary_key.nil? # ArCache is depend on primary key implementation.
       @column_names = (columns.map(&:name) - @ignored_columns).freeze
       @column_indexes = @unique_indexes.flatten.freeze
-      @md5 = Digest::MD5.hexdigest(columns.to_json)
+      @md5 = Digest::MD5.hexdigest("#{@disabled}-#{columns.to_json}")
 
-      init_version(ArCache::Record.store(self).version)
+      ArCache::Record.store(self)
 
       self.class.all << self
     end
@@ -60,16 +58,12 @@ module ArCache
     end
 
     def version
-      ArCache::Store.fetch(cache_key_prefix) { ArCache::Record.version(self) }
+      ArCache::Store.read(cache_key_prefix) || ArCache::Store.write(cache_key_prefix, ArCache::Record.version(self))
     end
 
-    def update_version(version = nil)
-      return -1 if disabled?
-
-      version ||= ArCache::Record.update_version(self)
-      ArCache::Store.write(cache_key_prefix, version)
+    def update_version
+      disabled? ? -1 : ArCache::Store.write(cache_key_prefix, ArCache::Record.update_version(self))
     end
-    alias init_version update_version
 
     def primary_cache_key(id)
       "#{cache_key_prefix}:#{version}:#{primary_key}=#{id}"

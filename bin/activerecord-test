@@ -4,7 +4,7 @@ IFS=$'\n\t'
 set -vx
 
 if [ ! -d 'tmp/rails/' ]; then
-  git clone --depth=1 --branch=6-1-ar_cache-test https://github.com/OuYangJinTing/rails.git tmp/rails && cd tmp/rails
+  git clone --branch=6-1-ar_cache-test https://github.com/OuYangJinTing/rails.git tmp/rails && cd tmp/rails
 else
   cd tmp/rails && git pull origin 6-1-ar_cache-test
 fi

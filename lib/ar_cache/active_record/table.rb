@@ -15,8 +15,6 @@ module ArCache
             else
               ArCache::Table.new(table_name)
             end
-          rescue ::ActiveRecord::StatementInvalid # The table may not exist
-            ArCache::MockTable
           end
         end
       end

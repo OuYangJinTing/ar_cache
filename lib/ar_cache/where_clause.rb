@@ -105,6 +105,8 @@ module ArCache
     module Raw
       def where_values_hash
         @where_values_hash ||= equalities(predicates).each_with_object({}) do |node, hash|
+          # Don't support Arel::Nodes::NamedFunction.
+          # But we don't judge it, because it will raise exception if it is Arel::Nodes::NamedFunction object.
           next if table.name != node.left.relation.name
 
           name = node.left.name.to_s

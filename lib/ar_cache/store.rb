@@ -15,7 +15,8 @@ module ArCache
       end
 
       def read(name)
-        load(ArCache::Configuration.cache_store.read(name, @options))
+        value = ArCache::Configuration.cache_store.read(name, @options)
+        value ? load(value) : value
       end
 
       def read_multi(names)
@@ -30,14 +31,6 @@ module ArCache
 
       def delete_multi(names)
         ArCache::Configuration.cache_store.delete_multi(names)
-      end
-
-      def fetch(name, &block)
-        ArCache::Configuration.cache_store.fetch(name, @options, &block)
-      end
-
-      def fetch_multi(names, &block)
-        ArCache::Configuration.cache_store.fetch(*names, @options, &block)
       end
 
       private def dump(value)

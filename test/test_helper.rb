@@ -56,6 +56,11 @@ end
 
 ArCache.configure do |config|
   config.select_disabled = false
+  config.tables_options = {
+    users: {
+      ignored_columns: [:useless]
+    }
+  }
 end
 
 # TODO: Auto perform lib/generators/ar_cache/templates/migrate/create_ar_cache_records.rb.tt
@@ -64,7 +69,6 @@ ActiveRecord::Base.connection.create_table(:ar_cache_records, force: :cascade) d
   t.string  :table_md5, null: false, limit: 32, default: '0' * 32
   t.integer :version, null: false, default: 0
   t.integer :lock_version, null: false, default: 0
-  t.boolean :disabled, null: false, default: false
   t.string  :unique_indexes, limit: 1000
   t.string  :ignored_columns, limit: 1000
 

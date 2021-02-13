@@ -8,7 +8,8 @@ Rake::TestTask.new(:test) do |t|
   t.libs << 'lib'
   t.test_files = FileList['test/**/*_test.rb']
   t.verbose = true
-  t.options = '--verbose --warnings --color --pride'
+  t.warning = true
+  t.options = '--warnings --color --pride --defer-output'
 end
 
 Rake::TestTask.new(:bench) do |t|
@@ -16,6 +17,7 @@ Rake::TestTask.new(:bench) do |t|
   t.libs << 'lib'
   t.test_files = FileList['test/**/*_benchmark.rb']
   t.verbose = true
+  t.warning = true
   t.options = '--verbose --warnings --color --pride'
 end
 
