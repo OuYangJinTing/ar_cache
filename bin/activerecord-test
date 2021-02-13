@@ -9,6 +9,6 @@ else
   cd tmp/rails && git pull origin 6-1-ar_cache-test
 fi
 
-bundle install
+bundle install --gemfile=./Gemfile
 cd activerecord
 bundle exec rake test:sqlite3
