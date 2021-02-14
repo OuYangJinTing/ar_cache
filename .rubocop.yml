@@ -9,6 +9,8 @@ AllCops:
 
 Metrics/BlockLength:
   Enabled: true
+  Exclude:
+    - '**/test/**/*'
 
 Metrics/AbcSize:
   Enabled: false

@@ -45,7 +45,11 @@ module ArCache
     describe '#default_scope' do
       it 'should has a default scope skip ar cache' do
         assert_equal 1, ArCache::Record.default_scopes.size
-        assert ArCache::Record.default_scopes.first.call.instance_variable_get(:@skip_ar_cache)
+
+        scope = ArCache::Record.default_scopes.first
+        scope = scope.scope if ::ActiveRecord.version >= Gem::Version.new('6.2.0')
+
+        assert scope.call.instance_variable_get(:@skip_ar_cache)
       end
     end
 
@@ -54,7 +58,7 @@ module ArCache
         ArCacheHelper.savepoint do
           User.ar_cache_table.stub :md5, '1' * 32 do
             user_record.store(User.ar_cache_table)
-            assert user_record.previous_changes.any? { |k, _| k == 'version' }
+            assert(user_record.previous_changes.any? { |k, _| k == 'version' })
           end
         end
       end
@@ -63,7 +67,7 @@ module ArCache
         ArCacheHelper.savepoint do
           User.ar_cache_table.stub :unique_indexes, [] do
             user_record.store(User.ar_cache_table)
-            assert user_record.previous_changes.any? { |k, _| k == 'version' }
+            assert(user_record.previous_changes.any? { |k, _| k == 'version' })
           end
         end
       end
@@ -72,7 +76,7 @@ module ArCache
         ArCacheHelper.savepoint do
           User.ar_cache_table.stub :ignored_columns, [] do
             user_record.store(User.ar_cache_table)
-            assert user_record.previous_changes.any? { |k, _| k == 'version' }
+            assert(user_record.previous_changes.any? { |k, _| k == 'version' })
           end
         end
       end

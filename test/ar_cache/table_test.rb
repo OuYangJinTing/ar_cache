@@ -9,7 +9,7 @@ module ArCache
         Thread.new { ArCache::Table.new(User.table_name) }
       end
 
-      assert_equal 1, ArCache::Table.all.count { |table| table.name == User.table_name }
+      assert_equal(1, ArCache::Table.all.count { |table| table.name == User.table_name })
     end
 
     describe '#cache_key' do
