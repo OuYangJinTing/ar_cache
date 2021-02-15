@@ -20,11 +20,13 @@ module ArCache
           through_record = if reflection.scope
                              owner.association(reflection.through_reflection.name).scope.merge(reflection.scope).first
                            else
-                             owner.send(reflection.through_reflection.name).first
+                             owner.send(reflection.through_reflection.name)
                            end
+          return super if through_record.is_a?(::ActiveRecord::Associations::CollectionProxy)
           return nil if !through_record || through_record.destroyed?
 
-          record = through_record.send(reflection.source_reflection.name).first
+          record = through_record.send(reflection.source_reflection.name)
+          record = record.first if record.is_a?(::ActiveRecord::Associations::CollectionProxy)
           return nil unless record
 
           record.tap { |r| set_inverse_instance(r) }

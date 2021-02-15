@@ -58,11 +58,21 @@ module ArCache
     end
 
     def version
-      ArCache::Store.read(cache_key_prefix) || ArCache::Store.write(cache_key_prefix, ArCache::Record.version(self))
+      version = ArCache::Store.read(cache_key_prefix)
+      unless version
+        version = ArCache::Record.version(self)
+        ArCache::Store.write(cache_key_prefix, version)
+      end
+
+      version
     end
 
     def update_version
-      disabled? ? -1 : ArCache::Store.write(cache_key_prefix, ArCache::Record.update_version(self))
+      return -1 if disabled?
+
+      version = ArCache::Record.update_version(self)
+      ArCache::Store.write(cache_key_prefix, version)
+      version
     end
 
     def primary_cache_key(id)

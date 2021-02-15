@@ -11,13 +11,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby-version: [2.7, 3.0]
+        ruby-version: [3.0]
         gemfile: [rails-6-1]
         experimental: [false]
         include:
-          - gemfile: rails-edge
-            ruby-version: 2.7
-            experimental: true
           - gemfile: rails-edge
             ruby-version: 3.0
             experimental: true

@@ -2,7 +2,7 @@
 
 module ArCache
   module ActiveRecord
-    module Table
+    module ModelSchema
       module ClassMethods
         def table_name=(...)
           super.tap { @ar_cache_table = nil }
@@ -17,10 +17,6 @@ module ArCache
             end
           end
         end
-      end
-
-      def self.prepended(klass)
-        super.tap { klass.singleton_class.prepend(ClassMethods) }
       end
 
       def ar_cache_table

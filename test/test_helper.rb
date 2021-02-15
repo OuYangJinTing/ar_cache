@@ -87,25 +87,14 @@ require 'models/book'
 require 'models/animal'
 require 'models/image'
 
-ArCache::Record.ar_cache_table
-User.ar_cache_table
-Image.ar_cache_table
-Identity.ar_cache_table
-Book.ar_cache_table
-Animal.ar_cache_table
-Cat.ar_cache_table
-Dog.ar_cache_table
-Account.ar_cache_table
-
 User.create(name: :ouyang1, email: :ouyang1)
 User.create(name: :ouyang2, email: :ouyang2)
 User.create(name: :ouyang3, email: :ouyang3)
 User.find(1).create_account(username: 1, password: 1)
 User.find(1).create_identity(num: 1)
-
 # User.find(1, 2, 3)
 # User.find(1, 2, 3)
-User.ar_cache_table.delete(3)
+# User.ar_cache_table.delete(3)
 # User.where(name: %i[ouyang1 ouyang3], status: 0).to_a
 # User.includes(:account, :identity).where(id: 1).to_a
 # User.find(1).account

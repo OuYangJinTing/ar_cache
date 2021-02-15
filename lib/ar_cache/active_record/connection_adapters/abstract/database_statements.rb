@@ -8,15 +8,15 @@ module ArCache
         # def execute(sql, name = nil)
         # end
 
-        def update(arel, name = nil, binds = [])
+        def update(arel, ...)
           super.tap { |num| update_ar_cache_version(arel) unless num.zero? }
         end
 
-        def delete(arel, name = nil, binds = [])
+        def delete(arel, ...)
           super.tap { |num| update_ar_cache_version(arel) unless num.zero? }
         end
 
-        def truncate(table_name, name = nil)
+        def truncate(table_name, ...)
           super.tap { update_ar_cache_version_by_table(table_name) }
         end
 
@@ -30,7 +30,6 @@ module ArCache
           # NOTE: ActiveRecord::FixtureSet default use transaction, it called #begin_transaction method.
           # So we can't use current_transaction.open? skip update ArCahe version.
           # return if current_transaction.open?
-          return if @skip_update_ar_cache_version
 
           if arel_or_sql_string.is_a?(String)
             update_ar_cache_version_by_sql(arel_or_sql_string)

@@ -6,13 +6,12 @@ module ArCache
       enabled? ? ArCache::Store.delete(primary_cache_key(id)) : -1
     end
 
-    def write(hash_rows) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    def write(records)
       return -1 if disabled?
-      return -1 if ignored_columns.any? && (column_names - hash_rows.first.keys).any?
 
       cache_hash = {}
-
-      hash_rows.each do |attributes|
+      records.each do |record|
+        attributes = record.attributes_before_type_cast
         key = nil
 
         unique_indexes.each_with_index do |index, i|

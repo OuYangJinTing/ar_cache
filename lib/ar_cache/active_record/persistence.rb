@@ -9,16 +9,12 @@ module ArCache
         end
       end
 
-      def self.prepended(klass)
-        super.tap { klass.singleton_class.prepend(ClassMethods) }
-      end
-
       def reload(options = nil)
         self.class.connection.clear_query_cache
 
         fresh_object =
           if options && options[:lock]
-            self.class.unscoped { self.class.lock(options[:lock]).skip_ar_cache.find(id) }
+            self.class.unscoped { self.class.skip_ar_cache.lock(options[:lock]).find(id) }
           else
             self.class.unscoped { self.class.skip_ar_cache.find(id) }
           end
