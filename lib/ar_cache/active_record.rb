@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'ar_cache/active_record/callbacks'
 require 'ar_cache/active_record/model_schema'
 require 'ar_cache/active_record/relation'
 require 'ar_cache/active_record/core'
@@ -10,6 +11,8 @@ require 'ar_cache/active_record/connection_adapters/abstract/database_statements
 
 # rubocop:disable Layout/LineLength
 ActiveSupport.on_load(:active_record, run_once: true) do
+  ActiveRecord::Base.include(ArCache::ActiveRecord::Callbacks)
+
   ActiveRecord::Core::ClassMethods.prepend(ArCache::ActiveRecord::Core::ClassMethods)
 
   ActiveRecord::ModelSchema.prepend(ArCache::ActiveRecord::ModelSchema)
