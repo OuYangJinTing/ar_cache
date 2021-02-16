@@ -27,6 +27,10 @@ module ArCache
         -1
       end
 
+      def primary_key
+        ''
+      end
+
       def primary_cache_key(...)
         ''
       end

@@ -41,7 +41,7 @@ module ArCache
 
         if wrong_key
           where_clause.add_missed_values(k)
-          where_clause.add_invalid_keys(k) if column_indexes.include?(k)
+          where_clause.add_invalid_keys(k) if column_indexes.include?(wrong_key)
         else
           records << instantiate(where_clause.klass, entry, &block)
         end

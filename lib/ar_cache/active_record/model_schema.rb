@@ -5,7 +5,7 @@ module ArCache
     module ModelSchema
       module ClassMethods
         def table_name=(...)
-          super.tap { @ar_cache_table = nil }
+          super.tap { remove_instance_variable(:@ar_cache_table) if defined?(@ar_cache_table) }
         end
 
         def ar_cache_table

@@ -8,6 +8,11 @@ module ArCache
         # def execute(sql, name = nil)
         # end
 
+        def insert(...)
+          super.tap { Thread.current[:skip_update_ar_cache_version] = false }
+        end
+        alias create insert
+
         def update(arel, ...)
           super.tap { |num| update_ar_cache_version(arel) unless num.zero? }
         end
@@ -27,11 +32,13 @@ module ArCache
         end
 
         private def update_ar_cache_version(arel_or_sql_string)
-          # NOTE: ActiveRecord::FixtureSet default use transaction, it called #begin_transaction method.
-          # So we can't use current_transaction.open? skip update ArCahe version.
-          # return if current_transaction.open?
+          if current_transaction.try(:isolation_level) == :read_uncommitted
+            Thread.current[:skip_update_ar_cache_version] = false
+          end
 
-          if arel_or_sql_string.is_a?(String)
+          if Thread.current[:skip_update_ar_cache_version]
+            Thread.current[:skip_update_ar_cache_version] = false
+          elsif arel_or_sql_string.is_a?(String)
             update_ar_cache_version_by_sql(arel_or_sql_string)
           else # is Arel::TreeManager
             update_ar_cache_version_by_arel(arel_or_sql_string)

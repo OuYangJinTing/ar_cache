@@ -33,7 +33,7 @@ module ArCache
       options.each { |k, v| instance_variable_set("@#{k}", v) }
       @disabled = true if @primary_key.nil? # ArCache is depend on primary key implementation.
       @column_names = (columns.map(&:name) - @ignored_columns).freeze
-      @column_indexes = @unique_indexes.flatten.freeze
+      @column_indexes = @unique_indexes.flatten.uniq.freeze
       @md5 = Digest::MD5.hexdigest("#{@disabled}-#{columns.to_json}")
 
       ArCache::Record.store(self)
