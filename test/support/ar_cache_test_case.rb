@@ -66,27 +66,11 @@ class ArCacheTestCase < ActiveSupport::TestCase
     assert_queries(0, options, &block)
   end
 
-  def assert_no_read_cache
-    assert_not_called(ArCache::Configuration.cache_store, :read) do
-      assert_not_called(ArCache::Configuration.cache_store, :read_multi) do
-        yield
-      end
-    end
-  end
+  def assert_no_cache(type, &block)
+    raise ArgumentError, 'type must be read\write\delete' unless %i[read write delete].include?(type.to_sym)
 
-  def assert_no_write_cache
-    assert_not_called(ArCache::Configuration.cache_store, :write) do
-      assert_not_called(ArCache::Configuration.cache_store, :write_multi) do
-        yield
-      end
-    end
-  end
-
-  def assert_no_delete_cache
-    assert_not_called(ArCache::Configuration.cache_store, :delete) do
-      assert_not_called(ArCache::Configuration.cache_store, :delete_multi) do
-        yield
-      end
+    assert_not_called(ArCache::Configuration.cache_store, type) do
+      assert_not_called(ArCache::Configuration.cache_store, "#{type}_multi", &block)
     end
   end
 
@@ -98,7 +82,7 @@ class ArCacheTestCase < ActiveSupport::TestCase
     assert_not has_column?(model, column_name), msg
   end
 
-  def has_column?(model, column_name)
+  def has_column?(model, column_name) # rubocop:disable Naming/PredicateName
     model.reset_column_information
     model.column_names.include?(column_name.to_s)
   end
