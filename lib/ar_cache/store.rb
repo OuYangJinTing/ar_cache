@@ -5,6 +5,8 @@ module ArCache
     @options = { raw: true, expires_in: ArCache::Configuration.expires_in }.freeze
 
     class << self
+      delegate :delete, :delete_multi, :clear, :exist?, to: 'ArCache::Configuration.cache_store'
+
       def write(name, value)
         ArCache::Configuration.cache_store.write(name, dump(value), @options)
       end
@@ -23,14 +25,6 @@ module ArCache
         entries = ArCache::Configuration.cache_store.read_multi(*names, @options)
         entries.each { |k, v| entries[k] = load(v) }
         entries
-      end
-
-      def delete(name)
-        ArCache::Configuration.cache_store.delete(name)
-      end
-
-      def delete_multi(names)
-        ArCache::Configuration.cache_store.delete_multi(names)
       end
 
       private def dump(value)

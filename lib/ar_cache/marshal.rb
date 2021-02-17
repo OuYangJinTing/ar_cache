@@ -2,8 +2,10 @@
 
 module ArCache
   module Marshal
-    def delete(id)
-      enabled? ? ArCache::Store.delete(primary_cache_key(id)) : -1
+    def delete(*ids)
+      return -1 if disabled?
+
+      ArCache::Store.delete_multi(ids.map { |id| primary_cache_key(id) })
     end
 
     def write(records)

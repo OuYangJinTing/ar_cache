@@ -9,7 +9,7 @@ Rake::TestTask.new(:test) do |t|
   t.test_files = FileList['test/**/*_test.rb']
   t.verbose = true
   t.warning = true
-  t.options = '--warnings --color --pride --defer-output'
+  t.options = '--warnings --color'
 end
 
 Rake::TestTask.new(:bench) do |t|
@@ -18,7 +18,7 @@ Rake::TestTask.new(:bench) do |t|
   t.test_files = FileList['test/**/*_benchmark.rb']
   t.verbose = true
   t.warning = true
-  t.options = '--verbose --warnings --color --pride'
+  t.options = '--verbose --warnings --color'
 end
 
 require 'rubocop/rake_task'

@@ -55,7 +55,7 @@ module ArCache
 
     describe '#store' do
       it 'should update version if table_md5 changed' do
-        ArCacheHelper.savepoint do
+        savepoint do
           User.ar_cache_table.stub :md5, '1' * 32 do
             user_record.store(User.ar_cache_table)
             assert(user_record.previous_changes.any? { |k, _| k == 'version' })
@@ -64,7 +64,7 @@ module ArCache
       end
 
       it 'should update version if unique_indexes decreased' do
-        ArCacheHelper.savepoint do
+        savepoint do
           User.ar_cache_table.stub :unique_indexes, [] do
             user_record.store(User.ar_cache_table)
             assert(user_record.previous_changes.any? { |k, _| k == 'version' })
@@ -73,7 +73,7 @@ module ArCache
       end
 
       it 'should update version if ignored_columns decreased' do
-        ArCacheHelper.savepoint do
+        savepoint do
           User.ar_cache_table.stub :ignored_columns, [] do
             user_record.store(User.ar_cache_table)
             assert(user_record.previous_changes.any? { |k, _| k == 'version' })
