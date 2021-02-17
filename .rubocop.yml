@@ -7,6 +7,10 @@ require:
 AllCops:
   NewCops: enable
 
+Rails/SkipsModelValidations:
+  Exclude:
+    - '**/test/**/*'
+
 Metrics/BlockLength:
   Enabled: true
   Exclude:
