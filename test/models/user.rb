@@ -25,6 +25,7 @@ class User < ApplicationRecord
 
   has_many :books, foreign_key: :author_id
   has_many :images, as: :imagable
+  has_many :plans
   has_one :account
   has_one :identity
 end

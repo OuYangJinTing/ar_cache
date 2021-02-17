@@ -29,7 +29,7 @@ ArCache.configure do |config|
     users: {
       ignored_columns: [:useless]
     },
-    identities: {
+    empties: {
       disabled: true
     }
   }
@@ -56,5 +56,7 @@ require 'models/account'
 require 'models/book'
 require 'models/animal'
 require 'models/image'
+require 'models/plan'
+require 'models/empty'
 
 ApplicationRecord.descendants.each(&:ar_cache_table) # Pre-initialized ArCache::Table
