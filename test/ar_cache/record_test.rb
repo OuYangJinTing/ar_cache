@@ -32,14 +32,6 @@ module ArCache
       it 'lock_version should has a default value' do
         assert 0, record.lock_version
       end
-
-      it 'should respond to unique_indexes' do
-        assert_respond_to record, :unique_indexes
-      end
-
-      it 'should respond to ignored_columns' do
-        assert_respond_to record, :ignored_columns
-      end
     end
 
     describe '#default_scope' do
@@ -57,24 +49,6 @@ module ArCache
       it 'should update version if table_md5 changed' do
         savepoint do
           User.ar_cache_table.stub :md5, '1' * 32 do
-            user_record.store(User.ar_cache_table)
-            assert(user_record.previous_changes.any? { |k, _| k == 'version' })
-          end
-        end
-      end
-
-      it 'should update version if unique_indexes decreased' do
-        savepoint do
-          User.ar_cache_table.stub :unique_indexes, [] do
-            user_record.store(User.ar_cache_table)
-            assert(user_record.previous_changes.any? { |k, _| k == 'version' })
-          end
-        end
-      end
-
-      it 'should update version if ignored_columns decreased' do
-        savepoint do
-          User.ar_cache_table.stub :ignored_columns, [] do
             user_record.store(User.ar_cache_table)
             assert(user_record.previous_changes.any? { |k, _| k == 'version' })
           end

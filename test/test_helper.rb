@@ -41,8 +41,6 @@ ActiveRecord::Base.connection.create_table(:ar_cache_records, force: :cascade) d
   t.string  :table_md5, null: false, limit: 32, default: '0' * 32
   t.integer :version, null: false, default: 0
   t.integer :lock_version, null: false, default: 0
-  t.string  :unique_indexes, limit: 1000
-  t.string  :ignored_columns, limit: 1000
 
   t.timestamps null: false
 

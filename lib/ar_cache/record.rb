@@ -4,9 +4,6 @@ module ArCache
   class Record < ActiveRecord::Base # rubocop:disable Rails/ApplicationRecord
     self.table_name = 'ar_cache_records'
 
-    serialize :unique_indexes, Array, default: []
-    serialize :ignored_columns, Array, default: []
-
     default_scope { skip_ar_cache }
 
     def self.get(table_name)
@@ -33,16 +30,8 @@ module ArCache
 
     def store(table)
       with_optimistic_retry do
-        if table_md5 != table.md5 ||
-           (unique_indexes - table.unique_indexes).any? ||
-           (ignored_columns - table.ignored_columns).any?
-
-          self.version += 1
-        end
-
+        self.version += 1 unless table_md5 == table.md5
         self.table_md5 = table.md5
-        self.unique_indexes = table.unique_indexes
-        self.ignored_columns = table.ignored_columns
 
         save! if changed?
       end
