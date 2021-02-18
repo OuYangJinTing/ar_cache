@@ -67,6 +67,13 @@ module ArCache
       @cache_hash
     end
 
+    def cache_keys
+      keys = cache_hash.keys
+      keys += cache_hash.values unless primary_key_index?
+
+      keys
+    end
+
     def missed_hash
       @missed_hash ||= @missed_values.empty? ? {} : { (@multi_values_key || @index.first) => @missed_values }
     end
@@ -88,17 +95,6 @@ module ArCache
 
     def delete_invalid_keys
       ArCache::Store.delete_multi(@invalid_keys) if @invalid_keys
-    end
-
-    def delete_cache_keys
-      return false unless cacheable?
-
-      keys = cache_hash.keys
-      keys += cache_hash.values unless primary_key_index?
-
-      ArCache::Store.delete_multi(keys)
-
-      true
     end
 
     # This module is based on ActiveRecord::Relation::WhereClause modified

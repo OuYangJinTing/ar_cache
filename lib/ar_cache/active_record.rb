@@ -25,14 +25,11 @@ ActiveSupport.on_load(:active_record, run_once: true) do
 
   ActiveRecord::Associations::HasOneThroughAssociation.prepend(ArCache::ActiveRecord::Associations::HasOneThroughAssociation)
 
-  ActiveRecord::ConnectionAdapters::TransactionState # rubocop:disable Lint/Void
+  ActiveRecord::ConnectionAdapters::NullTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
   ActiveRecord::ConnectionAdapters::Transaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
+  ActiveRecord::ConnectionAdapters::SavepointTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Commit)
+  ActiveRecord::ConnectionAdapters::RealTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Commit)
 
   ActiveRecord::ConnectionAdapters::DatabaseStatements.prepend(ArCache::ActiveRecord::ConnectionAdapters::DatabaseStatements)
-
-  unless ArCache::Configuration.read_uncommitted
-    require 'ar_cache/active_record/transactions'
-    ActiveRecord::Transactions.prepend(ArCache::ActiveRecord::Transactions)
-  end
 end
 # rubocop:enable Layout/LineLength

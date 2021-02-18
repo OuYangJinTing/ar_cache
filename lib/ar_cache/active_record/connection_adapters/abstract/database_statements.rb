@@ -8,11 +8,6 @@ module ArCache
         # def execute(sql, name = nil)
         # end
 
-        def insert(...)
-          super.tap { Thread.current[:skip_update_ar_cache_version] = false }
-        end
-        alias create insert
-
         def update(arel, ...)
           super.tap { |num| update_ar_cache_version(arel) unless num.zero? }
         end
@@ -32,13 +27,7 @@ module ArCache
         end
 
         private def update_ar_cache_version(arel_or_sql_string)
-          if current_transaction.try(:isolation_level) == :read_uncommitted
-            Thread.current[:skip_update_ar_cache_version] = false
-          end
-
-          if Thread.current[:skip_update_ar_cache_version]
-            Thread.current[:skip_update_ar_cache_version] = false
-          elsif arel_or_sql_string.is_a?(String)
+          if arel_or_sql_string.is_a?(String)
             update_ar_cache_version_by_sql(arel_or_sql_string)
           else # is Arel::TreeManager
             update_ar_cache_version_by_arel(arel_or_sql_string)
@@ -51,16 +40,15 @@ module ArCache
           #   - Arel::Table
           arel_table = arel.ast.relation.is_a?(Arel::Table) ? arel.ast.relation : arel.ast.relation.left
           klass = arel_table.instance_variable_get(:@klass)
-          table = klass.ar_cache_table
-          return if table.disabled?
+          return if klass.ar_cache_table.disabled?
 
           where_clause = ArCache::WhereClause.new(klass, arel.ast.wheres)
-          table.update_version unless where_clause.delete_cache_keys
+          current_transaction.add_where_clause(where_clause)
         end
 
         private def update_ar_cache_version_by_sql(sql)
           sql = sql.downcase
-          ArCache::Table.all.each { |table| table.update_version if sql.include?(table.name) }
+          ArCache::Table.all.each { |table| current_transaction.add_ar_cache_table(table) if sql.include?(table.name) }
         end
 
         private def update_ar_cache_version_by_table(table_name)

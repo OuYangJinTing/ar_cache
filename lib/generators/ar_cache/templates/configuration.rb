@@ -2,7 +2,7 @@
 
 # For more information, please see: https://github.com/OuYangJinTing/ar_cache/README.md
 ArCache.configure do |config|
-  # WARNING: The should uncomment only when your database default isolation level is "READ UNCOMMITTED"!
+  # WARNING: The should uncomment only when your database default isolation level is "READ UNCOMMITTED"!!!
   # Default: false
   # config.read_uncommitted = true
 

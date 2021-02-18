@@ -4,42 +4,42 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module Transaction
-        def rollback_records
-          if records
-            already_exists_records = {}
-            keys = records.filter_map do |record|
-              next if record.destroyed?
-              next if already_exists_records.key?(record)
-
-              already_exists_records[record] = true
-              record.ar_cache_table.primary_cache_key(record_orignal_id(record))
-            end
-
-            ArCache::Store.delete_multi(keys) if keys.any?
-          end
-
-          super
+        def add_where_clause(where_clause)
+          where_clause.cacheable? ? add_ar_cache_keys(where_clause.cache_keys) : add_ar_cache_table(where_clause.table)
         end
 
-        def commit_records # rubocop:disable Metrics/CyclomaticComplexity
-          if records && @run_commit_callbacks
-            already_exists_records = {}
-            keys = records.filter_map do |record|
-              next if record.previously_new_record? && record.persisted?
-              next if already_exists_records.key?(record)
-
-              already_exists_records[record] = true
-              record.ar_cache_table.primary_cache_key(record_orignal_id(record))
-            end
-
-            ArCache::Store.delete_multi(keys) if keys.any?
+        def add_ar_cache_keys(cache_keys)
+          if read_uncommitted?
+            ArCache::Store.delete_multi(cache_keys)
+          else
+            @ar_cache_keys ||= []
+            @ar_cache_keys.push(*cache_keys)
           end
-
-          super
         end
 
-        private def record_orignal_id(record)
-          record.previous_changes[record.ar_cache_table.primary_key]&.first || record.id_was
+        def add_ar_cache_table(table)
+          if read_uncommitted?
+            table.update_version
+          else
+            @ar_cache_tables ||= []
+            @ar_cache_tables.push(table)
+          end
+        end
+
+        def read_uncommitted?
+          is_a?(::ActiveRecord::ConnectionAdapters::NullTransaction) ||
+            ArCache::Configuration.read_uncommitted ||
+            isolation_level == :read_uncommitted ||
+            !@has_unmaterialized_transactions
+        end
+      end
+
+      module Commit
+        def commit
+          super.tap do
+            @ar_cache_tables.uniq(&:table_name).each(&:update_version) if defined?(@ar_cache_tables)
+            ArCache::Store.delete_multi(@ar_cache_keys.uniq) if defined?(@ar_cache_keys)
+          end
         end
       end
     end
