@@ -8,6 +8,31 @@ on:
 
 jobs:
   test:
+    runs-on: ubuntu-latest
+    # NOTE: I don’t know why can’t connect to the follows services.
+    # services:
+    #   postgres:
+    #     image: postgres
+    #     env:
+    #       POSTGRES_PASSWORD: postgres
+    #     ports:
+    #       - 5432:5432
+    #     options: >-
+    #       --health-cmd pg_isready
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
+    #   mysql:
+    #     image: mysql
+    #     env:
+    #       MYSQL_ROOT_PASSWORD: mysql
+    #     ports:
+    #       - 3306:3306
+    #     options: >-
+    #       --health-cmd 'mysqladmin ping'
+    #       --health-interval 10s
+    #       --health-timeout 5s
+    #       --health-retries 5
     strategy:
       fail-fast: false
       matrix:
@@ -18,20 +43,26 @@ jobs:
           - gemfile: rails-edge
             ruby-version: 3.0
             experimental: true
-    continue-on-error: ${{ matrix.experimental }}
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}
-    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup Ruby
-      uses: ruby/setup-ruby@v1.64.1
-      with:
-        ruby-version: ${{ matrix.ruby-version }}
-        bundler-cache: true
-    - name: Run tasks
-      run: |
-        gem install bundler
-        bundle install
-        bundle exec rake
-        BUNDLE_GEMFILE=../Gemfile bin/activerecord-test
+      - name: GitHub Actions
+        uses: actions/checkout@v2
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1.64.1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+      - name: Setup PostgreSQL
+        run: |
+          sudo apt-get -y install postgresql libpq-dev
+          sudo service postgresql start
+          sudo -u postgres createuser --superuser "$USER"
+      - name: Run ArCache Test
+        run: |
+          gem install bundler
+          bundle install
+          bundle exec rake
+      - name: Run ActiveRecord Test
+        run: bin/activerecord-test

@@ -9,6 +9,12 @@ else
   cd tmp/rails && git pull origin 6-1-ar_cache-test
 fi
 
-bundle install --gemfile=./Gemfile
+BUNDLE_GEMFILE=./Gemfile
+bundle install
+
 cd activerecord
+BUNDLE_GEMFILE=../Gemfile
+# bundle exec rake rebuild_mysql_databases
+bundle exec rake rebuild_postgresql_databases
 bundle exec rake test:sqlite3
+bundle exec rake test:postgresql
