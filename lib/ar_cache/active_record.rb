@@ -4,6 +4,7 @@ require 'ar_cache/active_record/model_schema'
 require 'ar_cache/active_record/relation'
 require 'ar_cache/active_record/core'
 require 'ar_cache/active_record/persistence'
+require 'ar_cache/active_record/insert_all'
 require 'ar_cache/active_record/associations/singular_association'
 require 'ar_cache/active_record/associations/has_one_through_association'
 require 'ar_cache/active_record/connection_adapters/abstract/transaction'
@@ -17,7 +18,8 @@ ActiveSupport.on_load(:active_record, run_once: true) do
   ActiveRecord::ModelSchema::ClassMethods.prepend(ArCache::ActiveRecord::ModelSchema::ClassMethods)
 
   ActiveRecord::Persistence.prepend(ArCache::ActiveRecord::Persistence)
-  ActiveRecord::Persistence::ClassMethods.prepend(ArCache::ActiveRecord::Persistence::ClassMethods)
+
+  ActiveRecord::InsertAll.prepend(ArCache::ActiveRecord::InsertAll)
 
   ActiveRecord::Relation.prepend(ArCache::ActiveRecord::Relation)
 

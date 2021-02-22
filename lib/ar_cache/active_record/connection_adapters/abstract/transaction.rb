@@ -40,6 +40,7 @@ module ArCache
           connection.transaction_manager.add_changed_table(table_name)
         end
 
+        # FIXME: Cache update and transaction commit may cause dirty reads during this period!
         def commit
           super
         ensure

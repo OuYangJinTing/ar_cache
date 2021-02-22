@@ -3,12 +3,6 @@
 module ArCache
   module ActiveRecord
     module Persistence
-      module ClassMethods
-        def upsert_all(...)
-          super.tap { ar_cache_table.update_version }
-        end
-      end
-
       def reload(options = nil)
         self.class.connection.clear_query_cache
 
