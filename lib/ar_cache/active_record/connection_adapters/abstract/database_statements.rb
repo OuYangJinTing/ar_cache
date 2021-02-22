@@ -4,9 +4,20 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module DatabaseStatements
-        # TODO
-        # def execute(sql, name = nil)
-        # end
+        def insert(arel, ...)
+          super.tap do
+            if arel.is_a?(String)
+              sql = arel.downcase
+              ArCache::Table.all.each do |table|
+                current_transaction.add_changed_table(table.name) if sql.include?(table.name)
+              end
+            else # is Arel::InsertManager
+              klass = arel.ast.relation.instance_variable_get(:@klass)
+              current_transaction.add_changed_table(klass.table_name)
+            end
+          end
+        end
+        alias create insert
 
         def update(arel, ...)
           super.tap { |num| update_ar_cache_version(arel) unless num.zero? }
@@ -43,7 +54,12 @@ module ArCache
           return if klass.ar_cache_table.disabled?
 
           where_clause = ArCache::WhereClause.new(klass, arel.ast.wheres)
-          current_transaction.add_where_clause(where_clause)
+          if where_clause.cacheable?
+            current_transaction.add_changed_table(klass.table_name)
+            current_transaction.add_ar_cache_keys(where_clause.cache_keys)
+          else
+            current_transaction.add_ar_cache_table(klass.ar_cache_table)
+          end
         end
 
         private def update_ar_cache_version_by_sql(sql)

@@ -20,14 +20,6 @@ module ArCache
 
         assert_equal first_key, second_key
       end
-
-      it 'should use md5 digest if length of value > 64' do
-        actual_key = User.ar_cache_table.cache_key({ 'email' => '0' * 65 }, ['email'])
-        md5 = Digest::MD5.hexdigest('0' * 65)
-        expect_key = "#{User.ar_cache_table.cache_key_prefix}:#{User.ar_cache_table.version}:email=#{md5}"
-
-        assert_equal expect_key, actual_key
-      end
     end
   end
 end

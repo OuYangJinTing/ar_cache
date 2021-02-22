@@ -34,7 +34,8 @@ module ArCache
       @disabled = true if @primary_key.nil? # ArCache is depend on primary key implementation.
       @column_names = (columns.map(&:name) - @ignored_columns).freeze
       @column_indexes = @unique_indexes.flatten.uniq.freeze
-      @md5 = Digest::MD5.hexdigest("#{@disabled}-#{columns.to_json}-#{@ignored_columns.to_json}")
+      coder = ArCache::Configuration.coder
+      @md5 = Digest::MD5.hexdigest("#{coder}-#{@disabled}-#{columns.to_json}-#{@ignored_columns.to_json}")
 
       ArCache::Record.store(self)
 
@@ -82,7 +83,6 @@ module ArCache
     def cache_key(where_values_hash, index, multi_values_key = nil, key_value = nil)
       where_value = index.map do |column|
         value = column == multi_values_key ? key_value : where_values_hash[column]
-        value = Digest::MD5.hexdigest(value) if value.respond_to?(:size) && value.size > 64
         "#{column}=#{value}"
       end.sort.join('&')
 

@@ -17,8 +17,7 @@ module ArCache
       end
 
       def read(name)
-        value = ArCache::Configuration.cache_store.read(name, @options)
-        value ? load(value) : value
+        load(ArCache::Configuration.cache_store.read(name, @options))
       end
 
       def read_multi(names)
@@ -32,7 +31,7 @@ module ArCache
       end
 
       private def load(value)
-        ArCache::Configuration.coder.load(value)
+        ArCache::Configuration.coder.load(value) if value
       end
     end
   end

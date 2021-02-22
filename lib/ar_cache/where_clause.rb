@@ -12,10 +12,9 @@ module ArCache
     end
 
     def cacheable?
-      return false if predicates.empty?
-      return false if where_values_hash.length != predicates.length
+      return @cacheable if defined?(@cacheable)
 
-      hit_unique_index?
+      @cacheable = predicates.any? && where_values_hash.length == predicates.length && hit_unique_index?
     end
 
     def hit_unique_index?
@@ -107,6 +106,8 @@ module ArCache
 
           name = node.left.name.to_s
           value = extract_node_value(node.right)
+          next if value.respond_to?(:size) && value.size > ArCache::Configuration.index_column_max_size
+
           hash[name] = value
         end
       rescue NoMethodError, ActiveModel::RangeError

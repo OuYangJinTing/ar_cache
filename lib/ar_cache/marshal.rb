@@ -8,6 +8,9 @@ module ArCache
       ArCache::Store.delete_multi(ids.map { |id| primary_cache_key(id) })
     end
 
+    # WARNING:
+    #   In order to ensure that the written data is consistent with the database,
+    #   only the record from the query can be written.
     def write(records)
       return -1 if disabled?
 

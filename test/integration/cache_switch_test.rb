@@ -38,13 +38,13 @@ describe ArCache, 'cache switch' do
 
     it 'should write cache' do
       User.ar_cache_table.delete(@user.id)
-      User.ar_cache_table.write([@user.reload])
+      User.find(@user.id)
 
       assert ArCache::Store.exist?(User.ar_cache_table.primary_cache_key(@user.id))
     end
 
     it 'should delete cache' do
-      User.ar_cache_table.write([@user.reload])
+      User.find(@user.id)
 
       assert ArCache::Store.exist?(User.ar_cache_table.primary_cache_key(@user.id))
 
@@ -54,7 +54,7 @@ describe ArCache, 'cache switch' do
     end
 
     it 'should read cache' do
-      User.ar_cache_table.write([@user.reload])
+      User.find(@user.id)
 
       assert_no_queries { User.find(@user.id) }
     end

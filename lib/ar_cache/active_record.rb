@@ -22,13 +22,12 @@ ActiveSupport.on_load(:active_record, run_once: true) do
   ActiveRecord::Relation.prepend(ArCache::ActiveRecord::Relation)
 
   ActiveRecord::Associations::SingularAssociation.prepend(ArCache::ActiveRecord::Associations::SingularAssociation)
-
   ActiveRecord::Associations::HasOneThroughAssociation.prepend(ArCache::ActiveRecord::Associations::HasOneThroughAssociation)
 
-  ActiveRecord::ConnectionAdapters::NullTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
-  ActiveRecord::ConnectionAdapters::Transaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
-  ActiveRecord::ConnectionAdapters::SavepointTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Commit)
-  ActiveRecord::ConnectionAdapters::RealTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Commit)
+  ActiveRecord::ConnectionAdapters::NullTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::NullTransaction)
+  ActiveRecord::ConnectionAdapters::RealTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
+  ActiveRecord::ConnectionAdapters::SavepointTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
+  ActiveRecord::ConnectionAdapters::TransactionManager.prepend(ArCache::ActiveRecord::ConnectionAdapters::TransactionManager)
 
   ActiveRecord::ConnectionAdapters::DatabaseStatements.prepend(ArCache::ActiveRecord::ConnectionAdapters::DatabaseStatements)
 end

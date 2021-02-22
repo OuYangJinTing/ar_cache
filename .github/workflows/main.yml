@@ -39,10 +39,10 @@ jobs:
         ruby-version: [3.0]
         gemfile: [rails-6-1]
         experimental: [false]
-        include:
-          - gemfile: rails-edge
-            ruby-version: 3.0
-            experimental: true
+        # include:
+        #   - gemfile: rails-edge
+        #     ruby-version: 3.0
+        #     experimental: true
     env:
       BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}
     continue-on-error: ${{ matrix.experimental }}
