@@ -22,7 +22,9 @@ module ArCache
                         end
 
       if missed_relation
-        missed_relation = missed_relation.reselect(table.column_names) if table.ignored_columns.any?
+        if table.ignored_columns.any? && relation.select_values.any?
+          missed_relation = missed_relation.reselect(table.column_names)
+        end
         records += relation.find_by_sql(missed_relation.arel, &block).tap { |rs| table.write(rs) }
       end
 
