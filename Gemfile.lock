@@ -2,8 +2,7 @@ PATH
   remote: .
   specs:
     ar_cache (0.1.0)
-      activerecord (>= 6.1, < 8)
-      activesupport (>= 6.1, < 8)
+      activerecord (>= 6.1, < 7)
 
 GEM
   remote: https://rubygems.org/

@@ -52,7 +52,7 @@ module ArCache
         end
       end
 
-      where_clause.delete_invalid_keys # TODO: Should only delete the cache for the wrong value of the index column
+      where_clause.delete_invalid_keys
 
       records
     end

@@ -1,8 +1,20 @@
 # ArCache
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/ar_cache`. To experiment with that code, run `bin/console` for an interactive prompt.
+`ArCache` is an modern cacheing library for `ActiveRecord` inspired by cache-money and second_level_cache.  
+It works automatically by copied `ActiveRecord` related code.
+When executing standard `ActiveRecord` query, it will first query the cache, and if there is none in the cache,
+then query the database and write the result to the cache.
 
-TODO: Delete this and the text above, and describe your gem
+> **! WARNING: Please read these [information](#Warning) before using `ArCache`.**
+
+## Features
+
+- `Low impact`: If your code strictly comply with the activerecord style, you don’t need to modify any code.([see more details](#Warning))
+- `Read cache`: Automatically intercept ActiveRecord queries, then try to fetch data from cache.
+- `Write cache`: If the query is cacheable and the cached data is not exists, it will be automatically written to the cache after the query.
+- `Expire cache`: Automatically expire cache after updated/modified data.
+- `Iterative cache`: The cache version will be updated after table fields, `ArCache` switch or `ArCache` coder changed.
+- `Shared cache`: The cache is not only used with ActiveRecord, you can easily use it in other places.([see examples](examples))
 
 ## Installation
 
@@ -14,15 +26,126 @@ gem 'ar_cache'
 
 And then execute:
 
-    $ bundle install
+```shell
+bundle install
+```
 
-Or install it yourself as:
+## Post Installation
 
-    $ gem install ar_cache
+If is an `rails` application:
+
+```shell
+rails generate ar_cache:install
+```
+
+Otherwise copy [configuration](lib/generators/ar_cache/templates/configuration.rb) and [migration](lib/generators/ar_cache/templates/migrate/create_ar_cache_records.rb.tt) files to your application.
+
+After that review the migrations then migrate:
+
+```shell
+rake db:migrate
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+`ArCache` works automatically, so you don’t need to care about how to use the cache, just need to know how to skip and delete the cache.
+
+Skip cache:
+
+- `ActiveRecord::Persistence#reload`, eg:
+
+```ruby
+User.find(1).reload
+```
+
+- `ActiveRecord::Relation#skip_ar_cache`, eg:
+
+```ruby
+User.skip_ar_cache.find(1)
+User.where(id: [1, 2]).skip_ar_cache.load
+```
+
+Delete cache:
+
+- `ArCache::Table`, eg:
+
+```ruby
+User.ar_cache_table.delete(id...)
+User.first.ar_cache_table.delete(id...)
+```
+
+## Configuration
+
+For configuration information, please see [configuration](lib/generators/ar_cache/templates/configuration.rb) file.
+
+## Cacheable query
+
+If all the following conditions are met, ArCache will try to read the cache:
+
+- Use hash as `#where` parameter.
+- Query condition contains unique index.
+- Condition of unique index is only one array or no array.
+- No call `#select` or select value is table column.
+- No call `#order` or order value is table column and only one.
+- No call `#limit` or value of the unique index isn't array.
+- No call `#joins`.
+- No call `#left_joins`.
+- No call `#skip_query_cache!`.
+- No call `#skip_ar_cache`.
+- No call `#explain`.
+- No call `#from`.
+- No call `#group`.
+- No call `value`.
+- ...
+
+**Cacheable example:**
+
+```ruby
+User.find(1) # primary key cache
+User.where(id: [1, 2]) # array query cache
+User.where(email: 'foobar@gmail.com') # sigle-column unique index cache
+User.where(name: 'foobar', status: :active) # multi-column unique index cache
+User.includes(:account).where(id: [1, 2]) # association cache
+User.first.account # association model cache
+```
+
+## Cache iteration
+
+The following cases will cause cache iteration：
+
+- Table field changes.
+- Open `ArCache` or close `ArCache`.
+- `ActiveRecord` update/delete condition does not hit the unique index.
+- `ActiveRecord` update/delete join other tables.
+
+**Notice: After iteration, all existing caches of the table will be expired!**
+
+## How it works(Work in progress)
+
+`ArCache` works based on the unique index of the table.
+
+## Warning
+
+- Prohibit the use of `#execute` update/delete operations!
+- Prohibit use `ActiveRecord` other underlying methods to directly update/delete data! (You is a fake activerecord user if this code appears)
+- Prohibit skip `ActiveRecord` directly update/delete data!
+
+## Alternatives
+
+There are some other gems implementations for `ActiveRecord` cache such as:
+
+- [identity_cache](https://github.com/Shopify/identity_cache)
+- [second_level_cache](https://github.com/hooopo/second_level_cache)
+- [cache-money](https://github.com/ngmoco/cache-money)
+
+However, `ArCache` has some differences:
+
+- It don’t depend with `ActiveRecord` callbacks, so don’t need to deal with dirty cache manually.
+- It cache real database data, so can use it's cache at other places.
+- It can automatically handle cache iteration, so don't need to update cache version manually.
+- It proxy standard ActiveRecord query, so don't need to modify the code and remember the additional api.
+- The new data need to perform a query before the cache will take effect.
+- The cache will not be updated after the data is updated, but the cache will be expired directly.
 
 ## Development
 
@@ -32,7 +155,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/ar_cache. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/[USERNAME]/ar_cache/blob/master/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at <https://github.com/OuYangJinTing/ar_cache>. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/OuYangJinTing/ar_cache/blob/master/CODE_OF_CONDUCT.md).
 
 ## License
 
@@ -40,4 +163,4 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Code of Conduct
 
-Everyone interacting in the ArCache project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/[USERNAME]/ar_cache/blob/master/CODE_OF_CONDUCT.md).
+Everyone interacting in the `ArCache` project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/OuYangJinTing/ar_cache/blob/master/CODE_OF_CONDUCT.md).

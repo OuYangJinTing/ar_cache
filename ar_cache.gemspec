@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['OuYangJinTing']
   spec.email         = ['2729877005qq@gmail.com']
 
-  spec.summary       = 'A modern cacheing library for ActiveRecord inspired by cache-money and second_level_cache.'
+  spec.summary       = 'An modern cacheing library for ActiveRecord inspired by cache-money and second_level_cache.'
   spec.description   = spec.summary
   spec.homepage      = 'https://github.com/OuYangJinTing/ar_cache'
   spec.license       = 'MIT'
@@ -27,7 +27,6 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activesupport', '>= 6.1', '< 7'
   spec.add_runtime_dependency 'activerecord', '>= 6.1', '< 7'
 
   # For more information and examples about making a new gem, checkout our

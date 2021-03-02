@@ -7,22 +7,28 @@ ArCache.configure do |config|
 
   # config.cache_store = ActiveSupport::Cache::Store # default Rails.cache || ActiveSupport::Cache::MemoryStore.new
 
+  # Cache key automatic expiration time.
+  # config.expires_in = Numeric # default 1 week
+
+  # Serialize and deserialize cached data.
   # config.coder = [YAML|JSON] # default YAML
 
+  # Support the maximum length of index column value.
   # config.index_column_max_size = Integer # default 64
 
+  # ArCache switch.
   # config.disabled = Boolean # default false
 
+  # Whether to support selecct columns query
   # config.select_disabled = Boolean # default true
-
-  # config.expires_in = Numeric # default 1 week
 
   # config.tables_options = {
   #   table_name: {
   #     disabled: Boolean,
   #     select_disabled: Boolean,
-  #     unique_indexes: Array # The primary key is forced to be used
-  #     ignored_columns: Array # The common ignored columns of single-table inheritance model
-  #   }
+  #     unique_indexes: Array # eg: [:id, [:name, :statue]], The default is the unique index column of the table.
+  #     ignored_columns: Array # eg: [:created_at, :updated_at], defaule [].
+  #   },
+  #   ...
   # }
 end
