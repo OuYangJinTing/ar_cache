@@ -33,7 +33,7 @@ class ArCacheTestCase < ActiveSupport::TestCase
   ensure
     failed_patterns = []
     patterns_to_match.each do |pattern|
-      failed_patterns << pattern unless SQLCounter.log_all.any? { |sql| pattern == sql }
+      failed_patterns << pattern unless SQLCounter.log_all.any? { |sql| pattern == sql } # rubocop:disable Performance/RedundantEqualityComparisonBlock
     end
     mesg = "Query pattern(s) #{failed_patterns.map(&:inspect).join(', ')} not found."
     mesg += "\nQueries:\n#{SQLCounter.log.join("\n")}" unless SQLCounter.log.empty?
