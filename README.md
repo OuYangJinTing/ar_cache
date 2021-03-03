@@ -1,7 +1,7 @@
 # ArCache
 
 `ArCache` is an modern cacheing library for `ActiveRecord` inspired by cache-money and second_level_cache.  
-It works automatically by copied `ActiveRecord` related code.
+It works automatically by overridden `ActiveRecord` related CURL code.
 When executing standard `ActiveRecord` query, it will first query the cache, and if there is none in the cache,
 then query the database and write the result to the cache.
 
@@ -95,19 +95,21 @@ If all the following conditions are met, ArCache will try to read the cache:
 - No call `#explain`.
 - No call `#from`.
 - No call `#group`.
-- No call `value`.
+- No call `#offset`.
 - ...
 
 **Cacheable example:**
 
 ```ruby
-User.find(1) # primary key cache
-User.where(id: [1, 2]) # array query cache
-User.where(email: 'foobar@gmail.com') # sigle-column unique index cache
-User.where(name: 'foobar', status: :active) # multi-column unique index cache
-User.includes(:account).where(id: [1, 2]) # association cache
-User.first.account # association model cache
+User.find(1) # support primary key cache
+User.where(id: [1, 2]) # support multi-value unique index cache
+User.where(email: 'foobar@gmail.com') # support sigle-column unique index cache
+User.where(name: 'foobar', status: :active) # support multi-column unique index cache
+User.includes(:account).where(id: [1, 2]) # support association preload cache
+User.first.account # support association reader cach
 ```
+
+The association cache support belongs_to and has_one, small amount of complex has_one(scope, through:, as:) don't support, then has_many cache support, please watch to future version.
 
 ## Cache iteration
 
