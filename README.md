@@ -1,5 +1,8 @@
 # ArCache
 
+![Test Status](https://github.com/OuYangJinTing/ar_cache/workflows/CI/badge.svg)
+[![Gem Version](https://badge.fury.io/rb/ar_cache.svg)](https://badge.fury.io/rb/ar_cache)
+
 `ArCache` is an modern cacheing library for `ActiveRecord` inspired by cache-money and second_level_cache.  
 It works automatically by overridden `ActiveRecord` related CURL code.
 When executing standard `ActiveRecord` query, it will first query the cache, and if there is none in the cache,
