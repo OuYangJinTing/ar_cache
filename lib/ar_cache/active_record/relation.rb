@@ -12,36 +12,33 @@ module ArCache
         super
       end
 
-      private def exec_queries(&block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity, Metrics/MethodLength
-        skip_query_cache_if_necessary do
-          records =
-            if where_clause.contradiction?
-              []
-            elsif eager_loading?
-              apply_join_dependency do |relation, join_dependency|
-                if relation.null_relation?
-                  []
-                else
-                  relation = join_dependency.apply_column_aliases(relation)
-                  rows = connection.select_all(relation.arel, 'SQL')
-                  join_dependency.instantiate(rows, strict_loading_value, &block)
-                end.freeze
-              end
-            elsif @skip_ar_cache ||
-                  klass.ar_cache_table.disabled? ||
-                  connection.transaction_manager.changed_table?(table_name)
-              klass.find_by_sql(arel, &block).freeze
-            else
-              ArCache::Query.new(self).exec_queries(&block).freeze
-            end
+      def update_all(...)
+        ArCache.pre_expire { delete_ar_cache_keys ? super : 0 }
+      end
 
-          preload_associations(records) unless skip_preloading_value
+      def delete_all
+        ArCache.pre_expire { delete_ar_cache_keys ? super : 0 }
+      end
 
-          records.each(&:readonly!) if readonly_value
-          records.each(&:strict_loading!) if strict_loading_value
+      private def delete_ar_cache_keys
+        return true if klass.ar_cache_table.disabled?
 
-          records
-        end
+        where_clause = ArCache::WhereClause.new(klass, arel.constraints)
+        keys = if where_clause.cacheable? && where_clause.primary_key_index?
+                 where_clause.primary_cache_keys
+               else
+                 pluck(primary_key).map { |item| klass.ar_cache_table.primary_cache_key(item) }
+               end
+
+        return false if keys.empty?
+
+        @klass.connection.current_transaction.delete_ar_cache_keys(keys)
+        @klass.connection.current_transaction.add_changed_table(@klass.table_name)
+        true
+      end
+
+      private def exec_queries(&block)
+        @skip_ar_cache ? super : ArCache::Query.new(self).exec_queries(&block).freeze
       end
     end
   end

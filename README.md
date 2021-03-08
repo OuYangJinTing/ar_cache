@@ -4,7 +4,7 @@
 [![Gem Version](https://badge.fury.io/rb/ar_cache.svg)](https://badge.fury.io/rb/ar_cache)
 
 `ArCache` is an modern cacheing library for `ActiveRecord` inspired by cache-money and second_level_cache.  
-It works automatically by overridden `ActiveRecord` related CURL code.
+It works automatically by overridden `ActiveRecord` related CURD code.
 When executing standard `ActiveRecord` query, it will first query the cache, and if there is none in the cache,
 then query the database and write the result to the cache.
 
@@ -85,20 +85,13 @@ For configuration information, please see [configuration](lib/generators/ar_cach
 
 If all the following conditions are met, ArCache will try to read the cache:
 
-- Use hash as `#where` parameter.
+- **Use hash as `#where` parameter**.
 - Query condition contains unique index.
 - Condition of unique index is only one array or no array.
 - No call `#select` or select value is table column.
 - No call `#order` or order value is table column and only one.
 - No call `#limit` or value of the unique index isn't array.
-- No call `#joins`.
-- No call `#left_joins`.
-- No call `#skip_query_cache!`.
-- No call `#skip_ar_cache`.
-- No call `#explain`.
-- No call `#from`.
-- No call `#group`.
-- No call `#offset`.
+- No call `#joins`, `#left_joins`, `#skip_query_cache!`, `#skip_ar_cache`, `#explain`, `#from`, `#group`, `#offset`, `#lock`
 - ...
 
 **Cacheable example:**
@@ -119,9 +112,8 @@ The association cache support belongs_to and has_one, small amount of complex ha
 The following cases will cause cache iteration：
 
 - Table field changes.
-- Open `ArCache` or close `ArCache`.
-- `ActiveRecord` update/delete condition does not hit the unique index.
-- `ActiveRecord` update/delete join other tables.
+- Turn on `ArCache` or turn off `ArCache`.
+- Call `#upsert_all` method.
 
 **Notice: After iteration, all existing caches of the table will be expired!**
 
@@ -134,6 +126,8 @@ The following cases will cause cache iteration：
 - Prohibit the use of `#execute` update/delete operations!
 - Prohibit use `ActiveRecord` other underlying methods to directly update/delete data! (You is a fake activerecord user if this code appears)
 - Prohibit skip `ActiveRecord` directly update/delete data!
+
+If you have to do this, please consider turning off ArCache.
 
 ## Alternatives
 

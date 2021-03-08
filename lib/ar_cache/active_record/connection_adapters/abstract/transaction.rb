@@ -4,15 +4,15 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module NullTransaction
-        def add_ar_cache_keys(keys, delay: false) # rubocop:disable Lint/UnusedMethodArgument
+        def delete_ar_cache_keys(keys, delay: false) # rubocop:disable Lint/UnusedMethodArgument
           ArCache::Store.delete_multi(keys)
         end
 
-        def add_ar_cache_table(table, delay: false) # rubocop:disable Lint/UnusedMethodArgument
+        def update_ar_cache_table(table, delay: false) # rubocop:disable Lint/UnusedMethodArgument
           table.update_version
         end
 
-        def add_changed_table(_); end
+        def add_changed_table(...); end
       end
 
       module Transaction
@@ -24,12 +24,12 @@ module ArCache
           @ar_cache_tables = []
         end
 
-        def add_ar_cache_keys(keys, delay: false)
+        def delete_ar_cache_keys(keys, delay: false)
           super if !delay && read_uncommitted?
           @ar_cache_keys.push(*keys)
         end
 
-        def add_ar_cache_table(table, delay: false)
+        def update_ar_cache_table(table, delay: false)
           add_changed_table(table.name) unless delay
 
           super if !delay && read_uncommitted?
@@ -49,8 +49,8 @@ module ArCache
             ArCache::Store.delete_multi(@ar_cache_keys.uniq) if @ar_cache_keys.any?
           else
             transaction = connection.current_transaction
-            @ar_cache_tables.each { |table| transaction.add_ar_cache_table(table, delay: true) }
-            transaction.add_ar_cache_keys(@ar_cache_keys, delay: true)
+            @ar_cache_tables.each { |table| transaction.update_ar_cache_table(table, delay: true) }
+            transaction.delete_ar_cache_keys(@ar_cache_keys, delay: true)
           end
         end
 

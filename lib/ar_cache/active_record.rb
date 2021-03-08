@@ -18,6 +18,7 @@ ActiveSupport.on_load(:active_record, run_once: true) do
   ActiveRecord::ModelSchema::ClassMethods.prepend(ArCache::ActiveRecord::ModelSchema::ClassMethods)
 
   ActiveRecord::Persistence.prepend(ArCache::ActiveRecord::Persistence)
+  ActiveRecord::Persistence::ClassMethods.prepend(ArCache::ActiveRecord::Persistence::ClassMethods)
 
   ActiveRecord::InsertAll.prepend(ArCache::ActiveRecord::InsertAll)
 

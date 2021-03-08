@@ -56,14 +56,4 @@ describe ArCache, 'cache remove' do
       end
     end
   end
-
-  it 'should update cache version when nont use unique index update or delete' do
-    assert_difference('ArCache::Record.get(User.table_name).version') do
-      User.update_all(updated_at: Time.current)
-    end
-
-    assert_difference('ArCache::Record.get(User.table_name).version') do
-      User.delete_all
-    end
-  end
 end

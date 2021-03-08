@@ -3,20 +3,30 @@
 module ArCache
   module ActiveRecord
     module Persistence
-      def reload(options = nil)
-        self.class.connection.clear_query_cache
-
-        fresh_object =
-          if options && options[:lock]
-            self.class.unscoped { self.class.skip_ar_cache.lock(options[:lock]).find(id) }
-          else
-            self.class.unscoped { self.class.skip_ar_cache.find(id) }
+      module ClassMethods
+        def _update_record(_, constraints)
+          ArCache.pre_expire do
+            delete_ar_cache_key(constraints[@primary_key])
+            super
           end
+        end
 
-        @attributes = fresh_object.instance_variable_get(:@attributes)
-        @new_record = false
-        @previously_new_record = false
-        self
+        def _delete_record(constraints)
+          ArCache.pre_expire do
+            delete_ar_cache_key(constraints[@primary_key])
+            super
+          end
+        end
+
+        private def delete_ar_cache_key(id)
+          key = ar_cache_table.primary_cache_key(id)
+          connection.current_transaction.delete_ar_cache_keys([key])
+          connection.current_transaction.add_changed_table(table_name)
+        end
+      end
+
+      def reload(...)
+        ArCache.skip_cache { super }
       end
     end
   end

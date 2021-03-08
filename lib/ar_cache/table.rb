@@ -43,7 +43,7 @@ module ArCache
     end
 
     def disabled?
-      @disabled
+      @disabled || ArCache.skip_cache?
     end
 
     def enabled?

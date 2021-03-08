@@ -18,5 +18,29 @@ require 'ar_cache/active_record'
 require_relative './generators/ar_cache/install_generator' if defined?(Rails)
 
 module ArCache
-  singleton_class.delegate :configure, to: Configuration
+  class << self
+    delegate :configure, to: Configuration
+
+    def skip_cache?
+      Thread.current[:ar_cache_skip_cache]
+    end
+
+    def skip_cache
+      Thread.current[:ar_cache_skip_cache] = true
+      yield
+    ensure
+      Thread.current[:ar_cache_skip_cache] = false
+    end
+
+    def pre_expire?
+      Thread.current[:ar_cache_pre_expire]
+    end
+
+    def pre_expire
+      Thread.current[:ar_cache_pre_expire] = true
+      yield
+    ensure
+      Thread.current[:ar_cache_pre_expire] = false
+    end
+  end
 end

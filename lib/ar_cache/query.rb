@@ -10,7 +10,8 @@ module ArCache
       @where_clause = ArCache::WhereClause.new(@relation.klass, @relation.where_clause.send(:predicates))
     end
 
-    def exec_queries(&block)
+    def exec_queries(&block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      return [] if relation.where_clause.contradiction?
       return relation.skip_ar_cache.send(:exec_queries, &block) unless exec_queries_cacheable?
 
       records = table.read(where_clause, @select_values, &block)
@@ -29,15 +30,25 @@ module ArCache
       end
 
       records_order(records)
+
+      relation.preload_associations(records) unless relation.skip_preloading_value
+
+      records.each(&:readonly!) if relation.readonly_value
+      records.each(&:strict_loading!) if relation.strict_loading_value
+
+      records
     end
 
     private def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+      return false if relation.klass.ar_cache_table.disabled?
       return false if relation.skip_query_cache_value
       return false if relation.lock_value
       return false if relation.group_values.any?
       return false if relation.joins_values.any?
       return false if relation.left_outer_joins_values.any?
       return false if relation.offset_value
+      return false if relation.eager_loading?
+      return false if relation.connection.transaction_manager.changed_table?(table.name)
       return false unless relation.from_clause.empty?
       return false unless where_clause.cacheable?
       return false unless select_values_cacheable?

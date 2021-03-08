@@ -6,9 +6,8 @@ module ArCache
       def execute
         super.tap do
           if on_duplicate == :update
-            connection.current_transaction.add_ar_cache_table(model.ar_cache_table)
-          else
-            connection.transaction_manager.add_changed_table(model.table_name)
+            connection.current_transaction.update_ar_cache_table(model.ar_cache_table)
+            connection.current_transaction.add_changed_table(model.table_name)
           end
         end
       end

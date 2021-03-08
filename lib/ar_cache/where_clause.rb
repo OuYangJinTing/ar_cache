@@ -66,11 +66,10 @@ module ArCache
       @cache_hash
     end
 
-    def cache_keys
-      keys = cache_hash.keys
-      keys += cache_hash.values unless primary_key_index?
+    def primary_cache_keys
+      raise 'Does not detect primary key index' unless primary_key_index?
 
-      keys
+      @primary_cache_keys ||= Array(where_values_hash[table.primary_key]).map { |v| table.primary_cache_key(v) }
     end
 
     def missed_hash
