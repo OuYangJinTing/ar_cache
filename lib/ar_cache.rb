@@ -18,6 +18,8 @@ require 'ar_cache/active_record'
 require_relative './generators/ar_cache/install_generator' if defined?(Rails)
 
 module ArCache
+  PRELOADER = ::ActiveRecord::Associations::Preloader.new
+
   class << self
     delegate :configure, to: Configuration
 

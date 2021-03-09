@@ -3,6 +3,11 @@
 module ArCache
   module ActiveRecord
     module Relation
+      def reload
+        @skip_ar_cache = true if loaded?
+        super
+      end
+
       def skip_ar_cache
         tap { @skip_ar_cache = true }
       end

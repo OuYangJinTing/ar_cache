@@ -5,6 +5,7 @@ require 'ar_cache/active_record/relation'
 require 'ar_cache/active_record/core'
 require 'ar_cache/active_record/persistence'
 require 'ar_cache/active_record/insert_all'
+require 'ar_cache/active_record/associations/association'
 require 'ar_cache/active_record/associations/singular_association'
 require 'ar_cache/active_record/associations/has_one_through_association'
 require 'ar_cache/active_record/connection_adapters/abstract/transaction'
@@ -24,6 +25,7 @@ ActiveSupport.on_load(:active_record, run_once: true) do
 
   ActiveRecord::Relation.prepend(ArCache::ActiveRecord::Relation)
 
+  ActiveRecord::Associations::Association.prepend(ArCache::ActiveRecord::Associations::Association)
   ActiveRecord::Associations::SingularAssociation.prepend(ArCache::ActiveRecord::Associations::SingularAssociation)
   ActiveRecord::Associations::HasOneThroughAssociation.prepend(ArCache::ActiveRecord::Associations::HasOneThroughAssociation)
 
