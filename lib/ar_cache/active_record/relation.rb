@@ -4,25 +4,19 @@ module ArCache
   module ActiveRecord
     module Relation
       def reload
-        @skip_ar_cache = true if loaded?
-        super
-      end
-
-      def skip_ar_cache
-        tap { @skip_ar_cache = true }
+        loaded? ? ArCache.skip { super } : super
       end
 
       def explain
-        @skip_ar_cache = true
-        super
+        ArCache.skip { super }
       end
 
       def update_all(...)
-        ArCache.pre_expire { delete_ar_cache_keys ? super : 0 }
+        ArCache.expire { delete_ar_cache_keys ? super : 0 }
       end
 
       def delete_all
-        ArCache.pre_expire { delete_ar_cache_keys ? super : 0 }
+        ArCache.expire { delete_ar_cache_keys ? super : 0 }
       end
 
       private def delete_ar_cache_keys
@@ -43,7 +37,7 @@ module ArCache
       end
 
       private def exec_queries(&block)
-        @skip_ar_cache ? super : ArCache::Query.new(self).exec_queries(&block).freeze
+        ArCache.skip? ? super : ArCache::Query.new(self).exec_queries(&block).freeze
       end
     end
   end

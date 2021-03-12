@@ -55,17 +55,31 @@ rake db:migrate
 
 Skip cache:
 
+- `ArCache#skip`, eg:
+
+```ruby
+# All queries in the block will not use the cache.
+ArCache.skip { User.find(1) }
+```
+
 - `ActiveRecord::Persistence#reload`, eg:
 
 ```ruby
 User.find(1).reload
 ```
 
-- `ActiveRecord::Relation#skip_ar_cache`, eg:
+- `ActiveRecord::Relation#reload`, eg:
 
 ```ruby
-User.skip_ar_cache.find(1)
-User.where(id: [1, 2]).skip_ar_cache.load
+# When reload is called after the associated target has been loaded, the cache will be skipped.
+User.where(id: 1).load.reload
+```
+
+- `ActiveRecord::Associations::Association#reload`, eg:
+
+```ruby
+# When reload is called after the associated target has been loaded, the cache will be skipped.
+user.association(:account).load_target.reload
 ```
 
 Delete cache:
@@ -91,7 +105,7 @@ If all the following conditions are met, ArCache will try to read the cache:
 - No call `#select` or select value is table column.
 - No call `#order` or order value is table column and only one.
 - No call `#limit` or value of the unique index isn't array.
-- No call `#joins`, `#left_joins`, `#skip_query_cache!`, `#skip_ar_cache`, `#explain`, `#from`, `#group`, `#offset`, `#lock`
+- No call `#joins`, `#left_joins`, `#skip_query_cache!`, `#explain`, `#from`, `#group`, `#offset`, `#lock`
 - ...
 
 **Cacheable example:**

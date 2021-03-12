@@ -43,19 +43,11 @@ module ArCache
     end
 
     def disabled?
-      @disabled || ArCache.skip_cache?
-    end
-
-    def enabled?
-      !disabled?
+      @disabled
     end
 
     def select_disabled?
       @select_disabled
-    end
-
-    def select_enabled?
-      !@select_disabled
     end
 
     def version

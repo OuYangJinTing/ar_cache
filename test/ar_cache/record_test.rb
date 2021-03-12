@@ -34,17 +34,6 @@ module ArCache
       end
     end
 
-    describe '#default_scope' do
-      it 'should has a default scope skip ar cache' do
-        assert_equal 1, ArCache::Record.default_scopes.size
-
-        scope = ArCache::Record.default_scopes.first
-        scope = scope.scope if ::ActiveRecord.version >= Gem::Version.new('6.2.0')
-
-        assert scope.call.instance_variable_get(:@skip_ar_cache)
-      end
-    end
-
     describe '#store' do
       it 'should update version if table_md5 changed' do
         savepoint do

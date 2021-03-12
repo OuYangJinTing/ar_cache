@@ -46,24 +46,24 @@ module ArCache
         end
 
         private def update_ar_cache_by_arel(arel)
-          return if ArCache.pre_expire?
+          return if ArCache.expire?
 
           arel_table = arel.ast.relation.is_a?(Arel::Table) ? arel.ast.relation : arel.ast.relation.left
           klass = arel_table.instance_variable_get(:@klass)
-          current_transaction.update_ar_cache_table(klass.ar_cache_table) if klass.ar_cache_table.enabled?
+          current_transaction.update_ar_cache_table(klass.ar_cache_table) unless klass.ar_cache_table.disabled?
         end
 
         private def update_ar_cache_by_sql(sql)
           sql = sql.downcase
 
           ArCache::Table.all.each do |table|
-            current_transaction.update_ar_cache_table(table) if table.enabled? && sql.include?(table.name)
+            current_transaction.update_ar_cache_table(table) if !table.disabled? && sql.include?(table.name)
           end
         end
 
         private def update_ar_cache_by_table(table_name)
           ArCache::Table.all.each do |table|
-            current_transaction.update_ar_cache_table(table) if table.enabled? && table_name.casecmp?(table.name)
+            current_transaction.update_ar_cache_table(table) if !table.disabled? && table_name.casecmp?(table.name)
           end
         end
       end

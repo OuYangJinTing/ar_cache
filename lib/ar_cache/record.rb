@@ -4,10 +4,8 @@ module ArCache
   class Record < ActiveRecord::Base # rubocop:disable Rails/ApplicationRecord
     self.table_name = 'ar_cache_records'
 
-    default_scope { skip_ar_cache }
-
     def self.get(table_name)
-      find_by(table_name: table_name)
+      ArCache.skip { find_by(table_name: table_name) }
     end
 
     def self.version(table)

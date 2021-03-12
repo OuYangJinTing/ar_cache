@@ -5,14 +5,14 @@ module ArCache
     module Persistence
       module ClassMethods
         def _update_record(_, constraints)
-          ArCache.pre_expire do
+          ArCache.expire do
             delete_ar_cache_key(constraints[@primary_key])
             super
           end
         end
 
         def _delete_record(constraints)
-          ArCache.pre_expire do
+          ArCache.expire do
             delete_ar_cache_key(constraints[@primary_key])
             super
           end
@@ -26,7 +26,7 @@ module ArCache
       end
 
       def reload(...)
-        ArCache.skip_cache { super }
+        ArCache.skip { super }
       end
     end
   end

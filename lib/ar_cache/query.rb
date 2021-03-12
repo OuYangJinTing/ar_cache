@@ -12,7 +12,7 @@ module ArCache
 
     def exec_queries(&block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return [] if relation.where_clause.contradiction?
-      return relation.skip_ar_cache.send(:exec_queries, &block) unless exec_queries_cacheable?
+      return ArCache.skip { relation.send(:exec_queries, &block) } unless exec_queries_cacheable?
 
       records = table.read(where_clause, @select_values, &block)
 

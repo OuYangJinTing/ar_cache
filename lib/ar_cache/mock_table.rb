@@ -7,16 +7,8 @@ module ArCache
         true
       end
 
-      def enabled?
-        false
-      end
-
       def select_disabled?
         true
-      end
-
-      def select_enabled?
-        false
       end
 
       def version

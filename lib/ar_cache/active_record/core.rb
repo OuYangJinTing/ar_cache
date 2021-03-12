@@ -4,16 +4,14 @@ module ArCache
   module ActiveRecord
     module Core
       module ClassMethods
-        delegate :skip_ar_cache, to: :all
-
         # The #find use statement cache execute querying first, so need force skip.
         def find(...)
-          ar_cache_table.enabled? ? all.find(...) : super
+          ArCache.skip? || ar_cache_table.disabled? ? super : all.find(...)
         end
 
         # The #find_by use statement cache execute querying first, so need force skip.
         def find_by(...)
-          ar_cache_table.enabled? ? all.find_by(...) : super
+          ArCache.skip? || ar_cache_table.disabled? ? super : all.find_by(...)
         end
       end
     end

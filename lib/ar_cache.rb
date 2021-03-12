@@ -23,26 +23,26 @@ module ArCache
   class << self
     delegate :configure, to: Configuration
 
-    def skip_cache?
-      Thread.current[:ar_cache_skip_cache]
+    def skip?
+      Thread.current[:ar_cache_skip]
     end
 
-    def skip_cache
-      Thread.current[:ar_cache_skip_cache] = true
+    def skip
+      Thread.current[:ar_cache_skip] = true
       yield
     ensure
-      Thread.current[:ar_cache_skip_cache] = false
+      Thread.current[:ar_cache_skip] = false
     end
 
-    def pre_expire?
-      Thread.current[:ar_cache_pre_expire]
+    def expire?
+      Thread.current[:ar_cache_expire]
     end
 
-    def pre_expire
-      Thread.current[:ar_cache_pre_expire] = true
+    def expire
+      Thread.current[:ar_cache_expire] = true
       yield
     ensure
-      Thread.current[:ar_cache_pre_expire] = false
+      Thread.current[:ar_cache_expire] = false
     end
   end
 end
