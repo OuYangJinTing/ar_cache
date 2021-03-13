@@ -18,7 +18,7 @@ require 'ar_cache/active_record'
 require_relative './generators/ar_cache/install_generator' if defined?(Rails)
 
 module ArCache
-  PRELOADER = ::ActiveRecord::Associations::Preloader.new
+  @cache_reflection = {}
 
   class << self
     delegate :configure, to: Configuration
@@ -28,10 +28,14 @@ module ArCache
     end
 
     def skip
-      Thread.current[:ar_cache_skip] = true
-      yield
-    ensure
-      Thread.current[:ar_cache_skip] = false
+      return yield if skip?
+
+      begin
+        Thread.current[:ar_cache_skip] = true
+        yield
+      ensure
+        Thread.current[:ar_cache_skip] = false
+      end
     end
 
     def expire?
@@ -39,10 +43,18 @@ module ArCache
     end
 
     def expire
-      Thread.current[:ar_cache_expire] = true
-      yield
-    ensure
-      Thread.current[:ar_cache_expire] = false
+      return yield if expire?
+
+      begin
+        Thread.current[:ar_cache_expire] = true
+        yield
+      ensure
+        Thread.current[:ar_cache_expire] = false
+      end
+    end
+
+    def cache_reflection?(reflection)
+      @cache_reflection.fetch(reflection) { @cache_reflection[reflection] = yield }
     end
   end
 end

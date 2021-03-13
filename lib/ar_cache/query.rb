@@ -39,7 +39,7 @@ module ArCache
       records
     end
 
-    private def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return false if relation.klass.ar_cache_table.disabled?
       return false if relation.skip_query_cache_value
       return false if relation.lock_value

@@ -24,8 +24,8 @@ module ArCache
         count = 0
 
         bool = index.all? do |column|
-          where_values_hash[column].tap do |value|
-            if value.is_a?(Array)
+          where_values_hash.key?(column).tap do
+            if where_values_hash[column].is_a?(Array)
               @multi_values_key = column
               count += 1
             end
@@ -52,7 +52,7 @@ module ArCache
       @cache_hash = {}
       multi_values_key = @multi_values_key || @index.first
 
-      Array(where_values_hash[multi_values_key]).each do |v|
+      Array.wrap(where_values_hash[multi_values_key]).each do |v|
         @cache_hash[table.cache_key(where_values_hash, @index, multi_values_key, v)] = v
       end
 
