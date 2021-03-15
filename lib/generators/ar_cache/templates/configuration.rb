@@ -27,7 +27,6 @@ ArCache.configure do |config|
   #     disabled: Boolean,
   #     select_disabled: Boolean,
   #     unique_indexes: Array # eg: [:id, [:name, :statue]], The default is the unique index column of the table.
-  #     ignored_columns: Array # eg: [:created_at, :updated_at], defaule [].
   #   },
   #   ...
   # }

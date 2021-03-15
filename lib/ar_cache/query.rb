@@ -23,10 +23,9 @@ module ArCache
                         end
 
       if missed_relation
-        if table.ignored_columns.any? && relation.select_values.any?
-          missed_relation = missed_relation.reselect(table.column_names)
+        records += relation.find_by_sql(missed_relation.arel, &block).tap do |rs|
+          table.write(rs) if relation.select_values.empty?
         end
-        records += relation.find_by_sql(missed_relation.arel, &block).tap { |rs| table.write(rs) }
       end
 
       records_order(records)
@@ -43,6 +42,7 @@ module ArCache
       return false if relation.klass.ar_cache_table.disabled?
       return false if relation.skip_query_cache_value
       return false if relation.lock_value
+      return false if relation.distinct_value
       return false if relation.group_values.any?
       return false if relation.joins_values.any?
       return false if relation.left_outer_joins_values.any?

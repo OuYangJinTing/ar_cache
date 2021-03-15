@@ -26,9 +26,6 @@ end
 ArCache.configure do |config|
   config.select_disabled = false
   config.tables_options = {
-    users: {
-      ignored_columns: [:useless]
-    },
     empties: {
       disabled: true
     }

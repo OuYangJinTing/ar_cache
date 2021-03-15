@@ -4,12 +4,11 @@ module ArCache
   class Table
     include Marshal
 
-    OPTIONS = %i[disabled select_disabled unique_indexes ignored_columns].freeze
+    OPTIONS = %i[disabled select_disabled unique_indexes].freeze
 
     singleton_class.attr_reader :all
 
-    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :md5,
-                :ignored_columns, :cache_key_prefix
+    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :md5, :cache_key_prefix
 
     delegate :connection, to: ActiveRecord::Base, private: true
 
@@ -32,10 +31,10 @@ module ArCache
       @unique_indexes = normalize_unique_indexes(options.delete(:unique_indexes), columns).freeze
       options.each { |k, v| instance_variable_set("@#{k}", v) }
       @disabled = true if @primary_key.nil? # ArCache is depend on primary key implementation.
-      @column_names = (columns.map(&:name) - @ignored_columns).freeze
+      @column_names = columns.map(&:name).freeze
       @column_indexes = @unique_indexes.flatten.uniq.freeze
       coder = ArCache::Configuration.coder
-      @md5 = Digest::MD5.hexdigest("#{coder}-#{@disabled}-#{columns.to_json}-#{@ignored_columns.to_json}")
+      @md5 = Digest::MD5.hexdigest("#{coder}-#{@disabled}-#{columns.to_json}")
 
       ArCache::Record.store(self)
 

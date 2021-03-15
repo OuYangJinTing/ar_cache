@@ -41,7 +41,6 @@ module ArCache
       options = tables_options[name.to_sym] || {}
       options[:disabled] = disabled unless options.key?(:disabled)
       options[:select_disabled] = select_disabled unless options.key?(:select_disabled)
-      options[:ignored_columns] = Array(options[:ignored_columns]).map(&:to_s)
       options[:unique_indexes] = Array(options[:unique_indexes]).map { |index| Array(index).map(&:to_s).uniq }.uniq
       options
     end
