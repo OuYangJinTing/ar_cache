@@ -2,10 +2,16 @@
 
 ## main
 
+## 1.4.0 (2021-03-15 UTC)
+
+[Commit [#7cc9ec8](https://github.com/OuYangJinTing/ar_cache/commit/7cc9ec8047394bb7758e25edd3b42fa48bb88640)]:
+
+- Remove `ArCache::Table` `ignored_columns` configuration.
+- Fix `ActiveRecord` call `#select` write to cache data is incomplete.
+
 ## 1.3.0 (2021-03-13 UTC)
 
-- [Commit [#4ec14e9](https://github.com/OuYangJinTing/ar_cache/commit/4ec14e9e762abb57a8ff18aa8c93a514db49c552)]: 
-Optimize association cache, only cacheable association use ArCache query now.
+- [Commit [#4ec14e9](https://github.com/OuYangJinTing/ar_cache/commit/4ec14e9e762abb57a8ff18aa8c93a514db49c552)]: Optimize association cache, only cacheable association use ArCache query now.
 
 ## 1.2.0 (2021-03-12 UTC)
 
