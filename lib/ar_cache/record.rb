@@ -5,7 +5,7 @@ module ArCache
     self.table_name = 'ar_cache_records'
 
     def self.get(table_name)
-      ArCache.skip { find_by(table_name: table_name) }
+      find_by(table_name: table_name)
     end
 
     def self.version(table)

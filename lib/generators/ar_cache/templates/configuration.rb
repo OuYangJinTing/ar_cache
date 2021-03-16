@@ -14,7 +14,7 @@ ArCache.configure do |config|
   # config.coder = [YAML|JSON] # default YAML
 
   # Support the maximum length of index column value.
-  # config.index_column_max_size = Integer # default 64
+  # config.column_length = Integer # default 64
 
   # ArCache switch.
   # config.disabled = Boolean # default false

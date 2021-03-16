@@ -23,6 +23,7 @@ module ActiveRecord
   end
 end
 
+DEFAULT_CONFIGURATION = ArCache::Configuration.dup
 ArCache.configure do |config|
   config.select_disabled = false
   config.tables_options = {

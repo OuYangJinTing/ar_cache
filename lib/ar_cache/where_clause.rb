@@ -105,7 +105,7 @@ module ArCache
 
           name = node.left.name.to_s
           value = extract_node_value(node.right)
-          next if value.respond_to?(:size) && value.size > ArCache::Configuration.index_column_max_size
+          next if value.respond_to?(:size) && value.size > ArCache::Configuration.column_length
 
           hash[name] = value
         end

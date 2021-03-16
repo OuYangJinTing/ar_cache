@@ -4,7 +4,7 @@ require 'yaml'
 
 module ArCache
   class Configuration
-    singleton_class.attr_accessor :disabled, :select_disabled, :expires_in, :read_uncommitted, :index_column_max_size
+    singleton_class.attr_accessor :disabled, :select_disabled, :expires_in, :read_uncommitted, :column_length
     singleton_class.attr_reader :cache_store, :tables_options, :coder
 
     def self.configure
@@ -53,6 +53,6 @@ module ArCache
     @select_disabled = true
     @expires_in = 604_800 # 1 week
     @read_uncommitted = false
-    @index_column_max_size = 64
+    @column_length = 64
   end
 end
