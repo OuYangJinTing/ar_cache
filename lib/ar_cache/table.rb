@@ -101,14 +101,14 @@ module ArCache
       end
     end
 
-    private def custom_unique_indexes(indexes)
+    private def custom_unique_indexes(indexes, columns)
       indexes.each do |index|
-        index.each do |column|
-          column = columns.find { |c| c.name == column }
-          raise ArgumentError, "The #{name} table not found #{column.inspect} column" if column.nil?
+        index.each do |field|
+          column = columns.find { |c| c.name == field }
+          raise ArgumentError, "The #{name} table not found #{field.inspect} column" if column.nil?
 
           if column.type == :datetime
-            raise ArgumentError, "The #{column.inspect} is datetime type, ArCache do't support datetime type"
+            raise ArgumentError, "The #{field.inspect} is datetime type, ArCache do't support datetime type"
           end
         end
       end

@@ -75,7 +75,7 @@ class ArCacheTestCase < ActiveSupport::TestCase
   end
 
   def assert_column(model, column_name, msg = nil)
-    assert has_column?(model, column_name), msg
+    assert has_column?(model, column_name), msg # rubocop:disable Minitest/AssertWithExpectedArgument
   end
 
   def assert_no_column(model, column_name, msg = nil)

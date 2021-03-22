@@ -15,7 +15,7 @@ module ArCache
           end
 
           if (owner.strict_loading? || reflection.strict_loading?) && owner.validation_context.nil?
-            Base.strict_loading_violation!(owner: owner.class, reflection: reflection)
+            ::ActiveRecord::Base.strict_loading_violation!(owner: owner.class, reflection: reflection)
           end
 
           PRELOADER.preload(owner, reflection.name)

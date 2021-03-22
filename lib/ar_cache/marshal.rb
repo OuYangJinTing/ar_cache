@@ -59,9 +59,9 @@ module ArCache
 
     private def detect_wrong_key(entry, where_values_hash)
       where_values_hash.detect do |k, v|
-        value = entry[k]
-        next if value.nil?
+        next unless entry.key?(k)
 
+        value = entry[k]
         if v.is_a?(Array)
           return k unless v.include?(value)
         else

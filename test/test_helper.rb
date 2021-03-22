@@ -28,7 +28,8 @@ ArCache.configure do |config|
   config.select_disabled = false
   config.tables_options = {
     empties: {
-      disabled: true
+      disabled: true,
+      unique_indexes: 'mark'
     }
   }
 end

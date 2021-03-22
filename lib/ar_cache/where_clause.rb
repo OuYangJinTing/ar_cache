@@ -2,7 +2,7 @@
 
 module ArCache
   class WhereClause
-    attr_reader :klass, :table, :predicates
+    attr_reader :klass, :table, :predicates, :invalid_keys
 
     def initialize(klass, predicates)
       @klass = klass

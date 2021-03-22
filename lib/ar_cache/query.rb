@@ -66,7 +66,7 @@ module ArCache
       (@select_values - table.column_names).empty?
     end
 
-    private def order_values_cacheable?
+    private def order_values_cacheable? # rubocop:disable Metrics/CyclomaticComplexity
       return true if where_clause.single?
 
       size = relation.order_values.size
@@ -81,6 +81,7 @@ module ArCache
       when String
         @order_name, @order_desc = first_order_value.downcase.split
         return false unless table.column_names.include?(@order_name)
+        return false unless ['asc', 'desc', nil].include?(@order_desc)
 
         @order_desc = @order_desc == 'desc'
       else
