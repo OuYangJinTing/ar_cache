@@ -2,6 +2,14 @@
 
 ## main
 
+## 1.5.0 (2021-03-22 UTC)
+
+[Compare [#7cc9ec8..10f9eea](https://github.com/OuYangJinTing/ar_cache/compare/7cc9ec8..10f9eea)]:
+
+- Fix `has_one thtough:` strict loading error.
+- Fix `#detect_wrong_key`, should check `nil` value match.
+- Rename `ArCache::Configuration#index_column_max_size` => `ArCache::Configuration#column_length`
+
 ## 1.4.0 (2021-03-15 UTC)
 
 [Compare [#3ff0bb8..7cc9ec8](https://github.com/OuYangJinTing/ar_cache/compare/3ff0bb8..7cc9ec8)]:
