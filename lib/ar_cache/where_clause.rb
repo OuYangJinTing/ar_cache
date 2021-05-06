@@ -59,7 +59,7 @@ module ArCache
       return @cache_hash if primary_key_index?
 
       @original_cache_hash = @cache_hash
-      @cache_hash = ArCache::Store.read_multi(@cache_hash.keys)
+      @cache_hash = ArCache.read_multi(*@cache_hash.keys, raw: true)
       @original_cache_hash.each { |k, v| @missed_values << v unless @cache_hash.key?(k) }
       @cache_hash = @cache_hash.invert
 
@@ -86,13 +86,13 @@ module ArCache
 
     def add_invalid_keys(key)
       @invalid_keys ||= []
-      @invalid_keys << key
+      # @invalid_keys << key # The primary key index is reliable.
       @invalid_keys << cache_hash[key] unless primary_key_index?
       @invalid_keys
     end
 
     def delete_invalid_keys
-      ArCache::Store.delete_multi(@invalid_keys) if @invalid_keys
+      ArCache.delete_multi(@invalid_keys) if @invalid_keys && @invalid_keys.any?
     end
 
     # This module is based on ActiveRecord::Relation::WhereClause modified
@@ -100,13 +100,10 @@ module ArCache
       def where_values_hash
         @where_values_hash ||= equalities(predicates).each_with_object({}) do |node, hash|
           # Don't support Arel::Nodes::NamedFunction.
-          # But we don't judge it, because it will raise exception if it is Arel::Nodes::NamedFunction object.
           next if table.name != node.left.relation.name
 
           name = node.left.name.to_s
           value = extract_node_value(node.right)
-          next if value.respond_to?(:size) && value.size > ArCache::Configuration.column_length
-
           hash[name] = value
         end
       rescue NoMethodError, ActiveModel::RangeError

@@ -55,11 +55,11 @@ rake db:migrate
 
 Skip cache:
 
-- `ArCache#skip`, eg:
+- `ArCache#skip_cache`, eg:
 
 ```ruby
 # All queries in the block will not use the cache.
-ArCache.skip { User.find(1) }
+ArCache.skip_cache { User.find(1) }
 ```
 
 - `ActiveRecord::Persistence#reload`, eg:

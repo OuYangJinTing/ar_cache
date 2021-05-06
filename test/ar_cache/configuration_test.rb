@@ -36,7 +36,6 @@ module ArCache
       assert_not_nil DEFAULT_CONFIGURATION.tables_options
       assert_not_nil DEFAULT_CONFIGURATION.coder
       assert_not_nil DEFAULT_CONFIGURATION.expires_in
-      assert_not_nil DEFAULT_CONFIGURATION.column_length
 
       assert DEFAULT_CONFIGURATION.select_disabled
       assert_not DEFAULT_CONFIGURATION.disabled
