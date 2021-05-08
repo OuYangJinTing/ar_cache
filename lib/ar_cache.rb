@@ -53,8 +53,17 @@ module ArCache
       end
     end
 
+    def unique_index_allow_nil?
+      Thread.current[:ar_cache_unique_index_allow_nil]
+    end
+
     def cache_reflection?(reflection)
-      @cache_reflection.fetch(reflection) { @cache_reflection[reflection] = yield }
+      @cache_reflection.fetch(reflection) do
+        Thread.current[:ar_cache_unique_index_allow_nil] = true
+        @cache_reflection[reflection] = yield
+      ensure
+        Thread.current[:ar_cache_unique_index_allow_nil] = false
+      end
     end
 
     def dump(value)

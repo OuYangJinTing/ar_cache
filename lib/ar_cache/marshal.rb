@@ -15,13 +15,13 @@ module ArCache
       return -1 if disabled?
 
       cache_hash = {}
-      records.each do |record|
-        attributes = record.attributes_before_type_cast
+      records.each do |attributes|
         key = primary_cache_key(attributes[primary_key])
         cache_hash[key] = dump(attributes)
         # The first index is primary key, should skip it.
         unique_indexes.each_with_index { |index, i| cache_hash[cache_key(attributes, index)] = key unless i.zero? }
       end
+      # FIXME: Before the data is written, it may have been updated or deleted.
       ArCache.write_multi(cache_hash, raw: true, expires_in: expires_in)
     rescue Encoding::UndefinedConversionError
       0

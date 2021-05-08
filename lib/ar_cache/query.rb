@@ -16,17 +16,11 @@ module ArCache
 
       records = table.read(where_clause, @select_values, &block)
 
-      missed_relation = if records.empty?
-                          relation
-                        elsif where_clause.missed_hash.any?
-                          relation.rewhere(where_clause.missed_hash)
-                        end
-
-      # FIXME: It will write incomplete table data, if model has ignored_columns.
-      if missed_relation
-        records += missed_relation.find_by_sql(missed_relation.arel, &block).tap do |rs|
-          table.write(rs) if missed_relation.select_values.empty?
-        end
+      if where_clause.missed_hash.any?
+        missed_relation = relation.rewhere(where_clause.missed_hash).reselect('*')
+        missed_relation.arel.singleton_class.attr_accessor(:klass_and_select_values)
+        missed_relation.arel.klass_and_select_values = [relation.klass, @select_values]
+        records += missed_relation.find_by_sql(missed_relation.arel, &block)
       end
 
       records_order(records)

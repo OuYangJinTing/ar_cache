@@ -4,6 +4,22 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module DatabaseStatements
+        def select_all(arel, ...)
+          result = super
+          klass, select_values = arel.try(:klass_and_select_values)
+          return result if klass.nil?
+
+          klass.ar_cache_table.write(result.to_a)
+
+          if select_values
+            result.to_a.each { |r| r.slice!(*select_values) }
+          elsif klass.ignored_columns.any?
+            result.to_a.each { |r| r.except!(*klass.ignored_columns) }
+          end
+
+          result
+        end
+
         # def insert(arel, ...)
         # end
         # alias create insert
