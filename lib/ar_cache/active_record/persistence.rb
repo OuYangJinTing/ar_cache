@@ -20,7 +20,7 @@ module ArCache
 
         private def delete_ar_cache_key(id)
           key = ar_cache_table.primary_cache_key(id)
-          connection.current_transaction.delete_ar_cache_keys([key], ar_cache_table)
+          connection.current_transaction.delete_ar_cache_primary_keys([key], ar_cache_table)
         end
       end
 

@@ -12,14 +12,14 @@ module ArCache
       end
 
       def update_all(...)
-        ArCache.skip_expire { delete_ar_cache_keys ? super : 0 }
+        ArCache.skip_expire { delete_ar_cache_primary_keys ? super : 0 }
       end
 
       def delete_all
-        ArCache.skip_expire { delete_ar_cache_keys ? super : 0 }
+        ArCache.skip_expire { delete_ar_cache_primary_keys ? super : 0 }
       end
 
-      private def delete_ar_cache_keys
+      private def delete_ar_cache_primary_keys
         return true if klass.ar_cache_table.disabled?
 
         where_clause = ArCache::WhereClause.new(klass, arel.constraints)
@@ -31,7 +31,7 @@ module ArCache
 
         return false if keys.empty?
 
-        @klass.connection.current_transaction.delete_ar_cache_keys(keys, @klass.ar_cache_table)
+        @klass.connection.current_transaction.delete_ar_cache_primary_keys(keys, @klass.ar_cache_table)
         true
       end
 
