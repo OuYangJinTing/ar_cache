@@ -11,10 +11,6 @@ ArCache.configure do |config|
   # Cache key automatic expiration time.
   # config.expires_in = Numeric # default 1 week
 
-  # Serialize and deserialize cached data.
-  # This setting only takes effect when using redis or memcached cache.
-  # config.coder = [YAML|JSON] # default YAML
-
   # ArCache switch.
   # config.disabled = Boolean # default false
 

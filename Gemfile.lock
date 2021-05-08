@@ -3,6 +3,7 @@ PATH
   specs:
     ar_cache (1.5.0)
       activerecord (>= 6.1, < 7)
+      oj (>= 3, < 4)
 
 GEM
   remote: https://rubygems.org/
@@ -96,6 +97,7 @@ GEM
     nio4r (2.5.7)
     nokogiri (1.11.2-x86_64-linux)
       racc (~> 1.4)
+    oj (3.11.5)
     parallel (1.20.1)
     parser (3.0.0.0)
       ast (~> 2.4.1)

@@ -2,6 +2,7 @@
 
 require 'active_support/cache'
 require 'active_record'
+require 'oj'
 
 require 'ar_cache/version'
 require 'ar_cache/configuration'
@@ -57,11 +58,11 @@ module ArCache
     end
 
     def dump(value)
-      memcached? || redis? ? ArCache::Configuration.coder.dump(value) : value
+      value && (memcached? || redis?) ? Oj.dump(value) : value
     end
 
     def load(value)
-      memcached? || redis? ? ArCache::Configuration.coder.load(value) : value
+      value && (memcached? || redis?) ? Oj.load(value) : value
     end
   end
 end

@@ -38,7 +38,7 @@ module ArCache
       @column_names = columns.map(&:name).freeze
 
       @identity_cache_key = "ar:cache:#{@name}".freeze
-      @short_sha1 = Digest::SHA1.hexdigest("#{ArCache::Configuration.coder}:#{@disabled}:#{columns.to_json}").first(7).freeze
+      @short_sha1 = Digest::SHA1.hexdigest("#{@disabled}:#{columns.to_json}").first(7).freeze
 
       # For avoid to skip Arcache read cache, must delete cache when disable Arcache.
       # For keep table's schema is consistent, must delete cache after modified the table.

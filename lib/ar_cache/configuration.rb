@@ -1,19 +1,16 @@
 # frozen_string_literal: true
 
-require 'yaml'
-
 module ArCache
   class Configuration
     @cache_store      = defined?(Rails) ? Rails.cache : ActiveSupport::Cache::MemoryStore.new
     @tables_options   = {}
-    @coder            = ::YAML
     @read_uncommitted = false
     @disabled         = false
     @select_disabled  = true
-    @expires_in       = 604_800 # 1 week
+    @expires_in       = 1.week
 
     class << self
-      attr_reader :cache_store, :tables_options, :coder
+      attr_reader :cache_store, :tables_options
       attr_writer :read_uncommitted
       attr_accessor :disabled, :select_disabled, :expires_in
 
@@ -55,12 +52,6 @@ module ArCache
         end
 
         @tables_options = options
-      end
-
-      def coder=(coder)
-        raise ArgumentError, 'The coder only support use YAML or JSON' unless [::YAML, ::JSON].include?(coder)
-
-        @coder = coder
       end
 
       def get_table_options(name)

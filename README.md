@@ -16,7 +16,7 @@ then query the database and write the result to the cache.
 - `Read cache`: Automatically intercept ActiveRecord queries, then try to fetch data from cache.
 - `Write cache`: If the query is cacheable and the cached data is not exists, it will be automatically written to the cache after the query.
 - `Expire cache`: Automatically expire cache after updated/modified data.
-- `Iterative cache`: The cache version will be updated after table fields, `ArCache` switch or `ArCache` coder changed.
+- `Iterative cache`: The cache version will be updated after table fields or `ArCache` switch changed.
 - `Shared cache`: The cache is not only used with ActiveRecord, you can easily use it in other places.([see examples](examples))
 
 ## Installation

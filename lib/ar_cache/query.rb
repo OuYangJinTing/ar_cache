@@ -24,8 +24,8 @@ module ArCache
 
       # FIXME: It will write incomplete table data, if model has ignored_columns.
       if missed_relation
-        records += relation.find_by_sql(missed_relation.arel, &block).tap do |rs|
-          table.write(rs) if relation.select_values.empty?
+        records += missed_relation.find_by_sql(missed_relation.arel, &block).tap do |rs|
+          table.write(rs) if missed_relation.select_values.empty?
         end
       end
 
