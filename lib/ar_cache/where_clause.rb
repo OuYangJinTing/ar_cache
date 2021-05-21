@@ -24,7 +24,7 @@ module ArCache
         count = 0
 
         bool = index.all? do |column|
-          (ArCache.unique_index_allow_nil? ? where_values_hash.key?(column) : where_values_hash[column]).tap do
+          (Thread.current[:ar_cache_reflection] ? where_values_hash.key?(column) : where_values_hash[column]).tap do
             if where_values_hash[column].is_a?(Array)
               @multi_values_key = column
               count += 1

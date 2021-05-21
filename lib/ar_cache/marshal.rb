@@ -3,7 +3,7 @@
 module ArCache
   module Marshal
     delegate :expires_in, to: ArCache::Configuration
-    delegate :dump, :load, to: ArCache
+    delegate :dump_attributes, :load_attributes, to: ArCache
 
     def delete(*ids)
       return -1 if disabled?
@@ -17,7 +17,7 @@ module ArCache
       cache_hash = {}
       records.each do |attributes|
         key = primary_cache_key(attributes[primary_key])
-        cache_hash[key] = dump(attributes)
+        cache_hash[key] = dump_attributes(attributes)
         # The first index is primary key, should skip it.
         unique_indexes.each_with_index { |index, i| cache_hash[cache_key(attributes, index)] = key unless i.zero? }
       end
@@ -27,14 +27,14 @@ module ArCache
       0
     end
 
-    def read(where_clause, select_values, &block)
+    def read(where_clause, select_values = nil, &block)
       entries_hash = ArCache.read_multi(*where_clause.cache_hash.keys, raw: true)
-      entries_hash = entries_hash.each { |k, v| entries_hash[k] = load(v) }
+      entries_hash = entries_hash.each { |k, v| entries_hash[k] = load_attributes(v) }
       where_clause.cache_hash.each_key { |k| where_clause.add_missed_values(k) unless entries_hash.key?(k) }
 
       records = []
       entries_hash.each do |k, entry|
-        wrong_key = detect_wrong_key(entry, where_clause.to_h)
+        wrong_key = detect_wrong_column(entry, where_clause.to_h)
 
         if wrong_key
           where_clause.add_missed_values(k)
@@ -48,7 +48,7 @@ module ArCache
       records
     end
 
-    private def detect_wrong_key(entry, where_values_hash)
+    private def detect_wrong_column(entry, where_values_hash)
       where_values_hash.detect do |k, v|
         value = entry[k]
 

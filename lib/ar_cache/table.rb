@@ -6,8 +6,8 @@ module ArCache
 
     singleton_class.attr_reader :all
 
-    @lock   = Mutex.new
-    @all    = []
+    @lock = Mutex.new
+    @all = []
 
     def self.new(table_name)
       @lock.synchronize do
@@ -67,7 +67,7 @@ module ArCache
       expires_in = ArCache.memcached? ? 0 : nil
       ArCache.write(identity_cache_key, key, raw: true, expires_in: expires_in)
       # Redis set command unable to set expires_in to -1.
-      ArCache::Configuration.cache_store.redis.with { |c| c.expire(identity_cache_key, -1) } if ArCache.redis?
+      ArCache.cache_store.redis.with { |c| c.expire(identity_cache_key, -1) } if ArCache.redis?
       key
     end
 
@@ -109,7 +109,7 @@ module ArCache
         attrs.each do |attr|
           column = columns.find { |c| c.name == attr }
           raise ArgumentError, "The #{name} table not found #{attr} column" if column.nil?
-          raise ArgumentError, "The #{attr} is datetime type, ArCache don't support it" if column.type == :datetime
+          raise ArgumentError, "The #{attr} is Time type, ArCache don't support it" if column.type == :datetime
         end
       end
     end

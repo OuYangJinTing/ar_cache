@@ -6,29 +6,47 @@ module ArCache
   describe Table do
     let(:table) { User.ar_cache_table }
 
-    it '#new should only create one object when use same table name concurrent calld #new' do
-      4.times do
-        Thread.new { ArCache::Table.new(User.table_name) }
+    it 'should respond to methods' do
+      assert_respond_to table, :name
+      assert_respond_to table, :primary_key
+      assert_respond_to table, :unique_indexes
+      assert_respond_to table, :column_indexes
+      assert_respond_to table, :column_names
+      assert_respond_to table, :identity_cache_key
+      assert_respond_to table, :short_sha1
+    end
+
+    describe '#new' do
+      it 'should not create same table name object' do
+        2.times { ArCache::Table.new(User.table_name) }
+        assert_equal [table], ArCache::Table.all.select { |table| table.name == User.table_name }
       end
 
-      assert_equal(1, ArCache::Table.all.count { |table| table.name == User.table_name })
+      it 'should not create same table name object when happen concurrent' do
+        unless in_memory_db?
+          begin
+            ArCache::Table.alias_method(:original_initialize, :initialize)
+            ArCache::Table.redefine_method(:initialize) { |table_name| sleep 0.1; original_initialize(table_name) }
+
+            ArCache::Table.all.delete(table)
+
+            Thread.new { ArCache::Table.new(User.table_name) }.join
+            Thread.new { ArCache::Table.new(User.table_name) }.join
+
+            assert_equal [table], ArCache::Table.all.select { |table| table.name == User.table_name }
+          ensure
+            ArCache::Table.alias_method(:initialize, :original_initialize)
+          end
+        end
+      end
     end
 
-    it '#md5 should use coder-disabled-columns calculate' do
-      coder = ArCache::Configuration.coder
-      disabled = table.disabled?
-      columns = User.connection.columns(User.table_name)
-      md5 = Digest::MD5.hexdigest("#{coder}-#{disabled}-#{columns.to_json}")
-
-      assert_equal md5, table.md5
-    end
-
-    it '#update_version should return -1 when disable ArCache' do
-      assert_equal(-1, Empty.ar_cache_table.update_version)
+    it '#update_cache should return -1 when disable ArCache' do
+      assert_equal '', Empty.ar_cache_table.update_cache
     end
 
     it '#primary_cache_key format' do
-      key = "#{table.cache_key_prefix}:#{table.version}:#{table.primary_key}=1"
+      key = "#{table.cache_key_prefix}:#{table.primary_key}=1"
 
       assert_equal key, table.primary_cache_key(1)
     end
@@ -40,7 +58,7 @@ module ArCache
       second_key = table.cache_key(where_values_hash.reverse_each.to_h, index)
 
       assert_equal first_key, second_key
-      assert_equal "#{table.cache_key_prefix}:#{table.version}:#{where_values_hash.to_query}", first_key
+      assert_equal "#{table.cache_key_prefix}:#{where_values_hash.to_query}", first_key
     end
 
     it '#normalize_unique_indexes should format' do
@@ -52,18 +70,18 @@ module ArCache
       assert_equal [['id'], ['email'], %w[name status]], table.unique_indexes
     end
 
-    describe '#custom_unique_indexes' do
+    describe '#validate_unique_indexes' do
       let(:columns) { User.connection.columns(User.table_name) }
 
       it 'noexists column' do
         assert_raises(ArgumentError) do
-          table.send(:custom_unique_indexes, [['noexists']], columns)
+          table.send(:validate_unique_indexes, [['noexists']], columns)
         end
       end
 
       it 'datetime type column' do
         assert_raises(ArgumentError) do
-          table.send(:custom_unique_indexes, [['created_at']], User.connection.columns(User.table_name))
+          table.send(:validate_unique_indexes, [['created_at']], User.connection.columns(User.table_name))
         end
       end
     end

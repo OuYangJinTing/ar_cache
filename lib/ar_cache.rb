@@ -20,8 +20,8 @@ module ArCache
   @cache_reflection = {}
 
   class << self
-    delegate :configure, :memcached?, :redis?, to: ArCache::Configuration
-    delegate *ActiveSupport::Cache::Store.instance_methods(false), to: 'ArCache::Configuration.cache_store'
+    delegate :configure, :memcached?, :redis?, :cache_store, to: ArCache::Configuration
+    delegate :read, :read_multi, :write, :write_multi, :delete, :delete_multi, :exist?, :clear, to: :cache_store
 
     def skip_cache?
       Thread.current[:ar_cache_skip_cache]
@@ -53,25 +53,21 @@ module ArCache
       end
     end
 
-    def unique_index_allow_nil?
-      Thread.current[:ar_cache_unique_index_allow_nil]
-    end
-
     def cache_reflection?(reflection)
       @cache_reflection.fetch(reflection) do
-        Thread.current[:ar_cache_unique_index_allow_nil] = true
+        Thread.current[:ar_cache_reflection] = true
         @cache_reflection[reflection] = yield
       ensure
-        Thread.current[:ar_cache_unique_index_allow_nil] = false
+        Thread.current[:ar_cache_reflection] = false
       end
     end
 
-    def dump(value)
-      value && (memcached? || redis?) ? Oj.dump(value) : value
+    def dump_attributes(attributes)
+      (memcached? || redis?) ? Oj.dump(attributes) : attributes
     end
 
-    def load(value)
-      value && (memcached? || redis?) ? Oj.load(value) : value
+    def load_attributes(attributes)
+      (memcached? || redis?) ? Oj.load(attributes) : attributes
     end
   end
 end

@@ -4,6 +4,15 @@ require 'test_helper'
 
 module ArCache
   describe WhereClause do
+    let(:where_clause) { ArCache::WhereClause.allocate }
+
+    it 'should respond to methods' do
+      assert_respond_to where_clause, :klass
+      assert_respond_to where_clause, :table
+      assert_respond_to where_clause, :predicates
+      assert_respond_to where_clause, :invalid_keys
+    end
+
     describe '#cacheable?' do
       it 'when predicates is noexists' do
         predicates = User.all.where_clause.send(:predicates)
@@ -19,14 +28,6 @@ module ArCache
         it 'normal column query' do
           predicates = User.where(name: :foobar).where_clause.send(:predicates)
           assert_not ArCache::WhereClause.new(User, predicates).cacheable?
-        end
-
-        it 'support nil query' do
-          predicates = User.where(id: nil).where_clause.send(:predicates)
-          where_clause = ArCache::WhereClause.new(User, predicates)
-          assert where_clause.cacheable?
-          assert_equal ['id'], where_clause.instance_variable_get(:@index)
-          assert_not where_clause.instance_variable_get(:@multi_values_key)
         end
 
         it 'single query hit index' do

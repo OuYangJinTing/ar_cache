@@ -7,23 +7,13 @@ require 'ar_cache'
 require 'sqlite3'
 require 'database_cleaner'
 require 'minitest/autorun'
+require 'support/test_case'
 
-require 'support/ar_cache_test_case'
+Minitest::Spec.register_spec_type(//, ArCache::TestCase)
 
-module Minitest
-  class Spec
-    register_spec_type(//, ArCacheTestCase)
-  end
-end
+ActiveRecord::Base.logger = Logger.new($stdout) if ENV['DEBUG']
+ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
-module ActiveRecord
-  class Base
-    self.logger = Logger.new($stdout) if ENV['DEBUG']
-    establish_connection(adapter: 'sqlite3', database: ':memory:')
-  end
-end
-
-DEFAULT_CONFIGURATION = ArCache::Configuration.dup
 ArCache.configure do |config|
   config.select_disabled = false
   config.tables_options = {

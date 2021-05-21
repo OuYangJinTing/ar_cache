@@ -9,10 +9,8 @@ describe ArCache, 'cache switch' do
   end
 
   describe 'disabled cache' do
-    it 'should not update cache version' do
-      assert_no_cache(:write) do
-        assert_no_sql { Empty.ar_cache_table.update_version }
-      end
+    it 'should not update cache' do
+      assert_no_cache(:write) { Empty.ar_cache_table.update_cache }
     end
 
     it 'should not write cache' do
@@ -29,28 +27,28 @@ describe ArCache, 'cache switch' do
   end
 
   describe 'enabled cache' do
-    it 'should update cache version' do
-      old_version = User.ar_cache_table.version
-      new_version = User.ar_cache_table.update_version
+    it 'should update cache' do
+      old_cache_key_prefix = User.ar_cache_table.cache_key_prefix
+      new_cache_key_prefix = User.ar_cache_table.update_cache
 
-      assert_not_equal old_version, new_version
+      assert_not_equal old_cache_key_prefix, new_cache_key_prefix
     end
 
     it 'should write cache' do
       User.ar_cache_table.delete(@user.id)
       User.find(@user.id)
 
-      assert ArCache::Store.exist?(User.ar_cache_table.primary_cache_key(@user.id))
+      assert ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id))
     end
 
     it 'should delete cache' do
       User.find(@user.id)
 
-      assert ArCache::Store.exist?(User.ar_cache_table.primary_cache_key(@user.id))
+      assert ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id))
 
       User.ar_cache_table.delete(@user.id)
 
-      assert_not ArCache::Store.exist?(User.ar_cache_table.primary_cache_key(@user.id))
+      assert_not ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id))
     end
 
     it 'should read cache' do

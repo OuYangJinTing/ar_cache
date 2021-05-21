@@ -43,15 +43,7 @@ module ArCache
       end
 
       def tables_options=(options)
-        options.each do |name, hash|
-          raise ArgumentError, "The #{name.inspect} must be converted to Symbol type" unless name.is_a?(Symbol)
-
-          hash.each_key do |k|
-            raise ArgumentError, "The #{k.inspect} must be converted to Symbol type" unless k.is_a?(Symbol)
-          end
-        end
-
-        @tables_options = options
+        @tables_options = options.deep_symbolize_keys
       end
 
       def get_table_options(name)
