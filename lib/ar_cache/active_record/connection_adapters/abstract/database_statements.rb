@@ -11,7 +11,6 @@ module ArCache
 
           klass.ar_cache_table.write(result.to_a)
 
-          # TODO: Should filter result.columns and result.rows
           if select_values
             result.to_a.each { |r| r.slice!(*select_values) }
           elsif klass.ignored_columns.any?

@@ -130,15 +130,18 @@ module ArCache
       end
 
       private def extract_node_value(node)
-        value = case node
-                when Array
-                  node.map { |v| extract_node_value(v) }
-                when Arel::Nodes::BindParam
-                  node.value.value_for_database # Maybe raise ActiveModel::RangeError
-                when Arel::Nodes::Casted, Arel::Nodes::Quoted
-                  node.value_for_database # Maybe raise ActiveModel::RangeError
-                end
+        case node
+        when Array
+          node.map { |v| extract_node_value(v) }
+        when Arel::Nodes::BindParam
+          value_for_database(node.value)
+        when Arel::Nodes::Casted, Arel::Nodes::Quoted
+          value_for_database(node)
+        end
+      end
 
+      private def value_for_database(node)
+        value = node.value_for_database # Maybe raise ActiveModel::RangeError
         value.is_a?(Date) ? value.to_s : value
       end
     end

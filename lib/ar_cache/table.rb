@@ -95,9 +95,7 @@ module ArCache
         next unless index.columns.is_a?(Array)
 
         index.columns.each do |column|
-          column = columns.find { |c| c.name == column }
-          next if column.null
-          next if column.type == :datetime
+          next if columns.none? { |c| c.name == column }
         end
 
         index.columns
@@ -109,7 +107,6 @@ module ArCache
         attrs.each do |attr|
           column = columns.find { |c| c.name == attr }
           raise ArgumentError, "The #{name} table not found #{attr} column" if column.nil?
-          raise ArgumentError, "The #{attr} is Time type, ArCache don't support it" if column.type == :datetime
         end
       end
     end

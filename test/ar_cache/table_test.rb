@@ -78,12 +78,6 @@ module ArCache
           table.send(:validate_unique_indexes, [['noexists']], columns)
         end
       end
-
-      it 'datetime type column' do
-        assert_raises(ArgumentError) do
-          table.send(:validate_unique_indexes, [['created_at']], User.connection.columns(User.table_name))
-        end
-      end
     end
   end
 end
