@@ -26,7 +26,7 @@ module ArCache
       0
     end
 
-    def read(where_clause, select_values = nil, &block)
+    def read(where_clause, select_values = nil, &block) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
       entries_hash = ArCache.read_multi(*where_clause.cache_hash.keys, raw: true)
       entries_hash = entries_hash.each do |k, v|
         if v == ArCache::PLACEHOLDER

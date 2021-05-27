@@ -19,21 +19,24 @@ module ArCache
     describe '#new' do
       it 'should not create same table name object' do
         2.times { ArCache::Table.new(User.table_name) }
-        assert_equal [table], ArCache::Table.all.select { |table| table.name == User.table_name }
+        assert_equal([table], ArCache::Table.all.select { |table| table.name == User.table_name })
       end
 
       it 'should not create same table name object when happen concurrent' do
         unless in_memory_db?
           begin
             ArCache::Table.alias_method(:original_initialize, :initialize)
-            ArCache::Table.redefine_method(:initialize) { |table_name| sleep 0.1; original_initialize(table_name) }
+            ArCache::Table.redefine_method(:initialize) do |table_name|
+              sleep 0.1
+              original_initialize(table_name)
+            end
 
             ArCache::Table.all.delete(table)
 
             Thread.new { ArCache::Table.new(User.table_name) }.join
             Thread.new { ArCache::Table.new(User.table_name) }.join
 
-            assert_equal [table], ArCache::Table.all.select { |table| table.name == User.table_name }
+            assert_equal([table], ArCache::Table.all.select { |table| table.name == User.table_name })
           ensure
             ArCache::Table.alias_method(:initialize, :original_initialize)
           end

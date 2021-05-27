@@ -53,7 +53,7 @@ describe ArCache do
 
   describe 'serialization' do
     let(:user_attributes) { User.new.attributes }
-    let(:times) { (ArCache.memcached? || ArCache.redis?) ? 1 : 0 }
+    let(:times) { ArCache.memcached? || ArCache.redis? ? 1 : 0 }
 
     it '#dump_attributes' do
       assert_called(Oj, :dump, times: times) { ArCache.dump_attributes(user_attributes) }

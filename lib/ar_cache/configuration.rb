@@ -24,11 +24,11 @@ module ArCache
       end
 
       def cache_store=(cache_store)
-        if !cache_store.is_a?(ActiveSupport::Cache::Store)
+        if !cache_store.is_a?(ActiveSupport::Cache::Store) # rubocop:disable Style/GuardClause
           raise ArgumentError, 'The cache_store must be an ActiveSupport::Cache::Store object'
-        elsif 'ActiveSupport::Cache::RedisCacheStore' == cache_store.class.name
+        elsif cache_store.class.name == 'ActiveSupport::Cache::RedisCacheStore' # rubocop:disable Style/ClassEqualityComparison
           @redis = true
-        elsif 'ActiveSupport::Cache::MemCacheStore' == cache_store.class.name
+        elsif cache_store.class.name == 'ActiveSupport::Cache::MemCacheStore' # rubocop:disable Style/ClassEqualityComparison
           @memcached = true
         end
 

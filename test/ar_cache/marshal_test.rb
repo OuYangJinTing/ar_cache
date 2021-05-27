@@ -20,13 +20,13 @@ module ArCache
     describe '#delete' do
       it 'should return -1 when disable ArCache' do
         assert_not_called(ArCache, :delete_multi) do
-          assert_equal -1, empty_table.delete('test')
+          assert_equal(-1, empty_table.delete('test'))
         end
       end
 
       it 'should delete cache when enable ArCache' do
         assert_called(ArCache, :delete_multi) do
-          assert_not_equal -1, user_table.delete('test')
+          assert_not_equal(-1, user_table.delete('test'))
         end
       end
     end
@@ -34,7 +34,7 @@ module ArCache
     describe '#write' do
       it 'should return -1 when disable ArCache' do
         assert_not_called(ArCache, :write) do
-          assert_equal -1, empty_table.write([Empty.first])
+          assert_equal(-1, empty_table.write([Empty.first]))
         end
       end
 
@@ -49,22 +49,22 @@ module ArCache
       let(:user1) { User.create(name: :foo, email: 'foo@test.com').reload }
       let(:user2) { User.create(name: :bar, email: 'bar@test.com').reload }
       let(:relation2) { User.where(email: [user1.email, user2.email]) }
-      let(:relation3) { relation2.where(name: ['foo', 'foobar']) }
+      let(:relation3) { relation2.where(name: %w[foo foobar]) }
       let(:where_clause1) do
         predicates = User.where(email: user1.email).where_clause.send(:predicates)
-        ArCache::WhereClause.new(User, predicates).tap { |where_clause| where_clause.cacheable? }
+        ArCache::WhereClause.new(User, predicates).tap(&:cacheable?)
       end
       let(:where_clause2) do
         predicates = User.where(email: [user1.email, user2.email]).where_clause.send(:predicates)
-        ArCache::WhereClause.new(User, predicates).tap { |where_clause| where_clause.cacheable? }
+        ArCache::WhereClause.new(User, predicates).tap(&:cacheable?)
       end
       let(:where_clause3) do
-        predicates = User.where(email: [user1.email, user2.email], name: ['foo', 'a']).where_clause.send(:predicates)
-        ArCache::WhereClause.new(User, predicates).tap { |where_clause| where_clause.cacheable? }
+        predicates = User.where(email: [user1.email, user2.email], name: %w[foo a]).where_clause.send(:predicates)
+        ArCache::WhereClause.new(User, predicates).tap(&:cacheable?)
       end
       let(:where_clause4) do
         predicates = User.where(email: user1.email, useless: 1).where_clause.send(:predicates)
-        ArCache::WhereClause.new(User, predicates).tap { |where_clause| where_clause.cacheable? }
+        ArCache::WhereClause.new(User, predicates).tap(&:cacheable?)
       end
 
       before { User.find(user1.id, user2.id) } # write cache
@@ -77,7 +77,7 @@ module ArCache
         end
 
         it 'should return select attributes records when select values is not nil' do
-          records = user_table.read(where_clause1, ['id', 'name'])
+          records = user_table.read(where_clause1, %w[id name])
           assert records.one?
           assert_equal user1.attributes.slice('id', 'name'), records.first.attributes
         end

@@ -10,10 +10,10 @@ module ArCache
 
     included do
       extend Minitest::Spec::DSL
-      TYPES = Minitest::Spec::DSL::TYPES
+      TYPES = Minitest::Spec::DSL::TYPES # rubocop:disable Lint/ConstantDefinitionInBlock
     end
 
-    def initialize name
+    def initialize(name)
       super
       Thread.current[:current_spec] = self
     end
@@ -51,14 +51,14 @@ module ArCache
       SQLCounter.log.dup
     end
 
-    def assert_sql(*patterns_to_match)
-      capture_sql { yield }
+    def assert_sql(*patterns_to_match, &block)
+      capture_sql(&block)
     ensure
       failed_patterns = []
       patterns_to_match.each do |pattern|
-        failed_patterns << pattern unless SQLCounter.log_all.any? { |sql| pattern === sql }
+        failed_patterns << pattern unless SQLCounter.log_all.any?(pattern)
       end
-      assert failed_patterns.empty?, "Query pattern(s) #{failed_patterns.map(&:inspect).join(', ')} not found.#{SQLCounter.log.size == 0 ? '' : "\nQueries:\n#{SQLCounter.log.join("\n")}"}"
+      assert_empty failed_patterns, "Query pattern(s) #{failed_patterns.map(&:inspect).join(', ')} not found.#{SQLCounter.log.empty? ? '' : "\nQueries:\n#{SQLCounter.log.join("\n")}"}" # rubocop:disable Layout/LineLength
     end
 
     def assert_queries(num = 1, options = {})
@@ -68,9 +68,9 @@ module ArCache
       x = yield
       the_log = ignore_none ? SQLCounter.log_all : SQLCounter.log
       if num == :any
-        assert_operator the_log.size, :>=, 1, "1 or more queries expected, but none were executed."
+        assert_operator the_log.size, :>=, 1, '1 or more queries expected, but none were executed.'
       else
-        mesg = "#{the_log.size} instead of #{num} queries were executed.#{the_log.size == 0 ? '' : "\nQueries:\n#{the_log.join("\n")}"}"
+        mesg = "#{the_log.size} instead of #{num} queries were executed.#{the_log.empty? ? '' : "\nQueries:\n#{the_log.join("\n")}"}" # rubocop:disable Layout/LineLength
         assert_equal num, the_log.size, mesg
       end
       x
@@ -82,14 +82,14 @@ module ArCache
     end
 
     def assert_column(model, column_name, msg = nil)
-      assert has_column?(model, column_name), msg
+      assert has_column?(model, column_name), msg # rubocop:disable Minitest/AssertWithExpectedArgument
     end
 
     def assert_no_column(model, column_name, msg = nil)
       assert_not has_column?(model, column_name), msg
     end
 
-    def has_column?(model, column_name)
+    def has_column?(model, column_name) # rubocop:disable Naming/PredicateName
       model.reset_column_information
       model.column_names.include?(column_name.to_s)
     end
@@ -164,19 +164,23 @@ module ArCache
   class SQLCounter
     class << self
       attr_accessor :ignored_sql, :log, :log_all
-      def clear_log; self.log = []; self.log_all = []; end
+
+      def clear_log
+        self.log = []
+        self.log_all = []
+      end
     end
 
     clear_log
 
-    def call(name, start, finish, message_id, values)
+    def call(_name, _start, _finish, _message_id, values)
       return if values[:cached]
 
       sql = values[:sql]
       self.class.log_all << sql
-      self.class.log << sql unless ["SCHEMA", "TRANSACTION"].include? values[:name]
+      self.class.log << sql unless %w[SCHEMA TRANSACTION].include? values[:name]
     end
   end
 
-  ActiveSupport::Notifications.subscribe("sql.active_record", SQLCounter.new)
+  ActiveSupport::Notifications.subscribe('sql.active_record', SQLCounter.new)
 end

@@ -10,7 +10,7 @@ module ArCache
           return super if ArCache.skip_cache?
           return super unless ArCache.cache_reflection?(reflection) do
             ArCache::Query.new(owner.association(through_reflection.name).scope).exec_queries_cacheable? &&
-            ArCache::Query.new(source_reflection.active_record.new.association(source_reflection.name).scope).exec_queries_cacheable?
+            ArCache::Query.new(source_reflection.active_record.new.association(source_reflection.name).scope).exec_queries_cacheable? # rubocop:disable Layout/LineLength
           end
 
           if (owner.strict_loading? || reflection.strict_loading?) && owner.validation_context.nil?

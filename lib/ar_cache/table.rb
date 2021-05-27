@@ -29,7 +29,7 @@ module ArCache
       @primary_key = ::ActiveRecord::Base.connection.primary_key(@name)
 
       options = ArCache::Configuration.get_table_options(@name)
-      @disabled = @primary_key.nil? ? true : options[:disabled]  # ArCache can't work if primary key does not exist.
+      @disabled = @primary_key.nil? ? true : options[:disabled] # ArCache can't work if primary key does not exist.
       @select_disabled = options[:select_disabled]
 
       columns = ::ActiveRecord::Base.connection.columns(@name)
@@ -42,7 +42,7 @@ module ArCache
 
       # For avoid to skip Arcache read cache, must delete cache when disable Arcache.
       # For keep table's schema is consistent, must delete cache after modified the table.
-      ArCache.delete(@identity_cache_key) if disabled? || !cache_key_prefix.start_with?("#{@identity_cache_key}:#{@short_sha1}")
+      ArCache.delete(@identity_cache_key) if disabled? || !cache_key_prefix.start_with?("#{@identity_cache_key}:#{@short_sha1}") # rubocop:disable Layout/LineLength
     end
 
     def disabled?
@@ -86,7 +86,7 @@ module ArCache
       (indexes - [primary_key]).sort_by(&:size).unshift([primary_key])
     end
 
-    private def query_unique_indexes(columns) # rubocop:disable Metrics/CyclomaticComplexity
+    private def query_unique_indexes(columns)
       ::ActiveRecord::Base.connection.indexes(name).filter_map do |index|
         next unless index.unique
         next unless index.columns.is_a?(Array)

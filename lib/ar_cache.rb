@@ -65,11 +65,11 @@ module ArCache
     end
 
     def dump_attributes(attributes)
-      (memcached? || redis?) ? Oj.dump(attributes) : attributes
+      memcached? || redis? ? Oj.dump(attributes) : attributes
     end
 
     def load_attributes(attributes)
-      (memcached? || redis?) ? Oj.load(attributes) : attributes
+      memcached? || redis? ? Oj.load(attributes) : attributes
     end
   end
 end

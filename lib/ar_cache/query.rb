@@ -28,9 +28,10 @@ module ArCache
           missed_relation.connection.transaction do
             records += missed_relation.find_by_sql(missed_relation.arel, &block)
           end
-        rescue => e
+        rescue ::ActiveRecord::StatementInvalid => e
           raise e if relation.connection.class.name != 'ActiveRecord::ConnectionAdapters::Mysql2Adapter'
           raise e if lock_statement == 'LOCK IN SHARE MODE'
+
           self.lock_statement = 'LOCK IN SHARE MODE'
           retry
         end
