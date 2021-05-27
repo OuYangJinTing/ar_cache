@@ -2,24 +2,17 @@
 
 module ArCache
   class Configuration
-    @cache_store      = defined?(Rails) ? Rails.cache : ActiveSupport::Cache::MemoryStore.new
-    @tables_options   = {}
-    @read_uncommitted = false
-    @disabled         = false
-    @select_disabled  = true
-    @expires_in       = 1.week
-
     class << self
+      attr_writer :cache_lock
       attr_reader :cache_store, :tables_options
-      attr_writer :read_uncommitted
       attr_accessor :disabled, :select_disabled, :expires_in
 
       def configure
         block_given? ? yield(self) : self
       end
 
-      def read_uncommitted?
-        @read_uncommitted
+      def cache_lock?
+        @cache_lock
       end
 
       def redis?
@@ -34,7 +27,7 @@ module ArCache
         if !cache_store.is_a?(ActiveSupport::Cache::Store)
           raise ArgumentError, 'The cache_store must be an ActiveSupport::Cache::Store object'
         elsif 'ActiveSupport::Cache::RedisCacheStore' == cache_store.class.name
-          @reids = true
+          @redis = true
         elsif 'ActiveSupport::Cache::MemCacheStore' == cache_store.class.name
           @memcached = true
         end

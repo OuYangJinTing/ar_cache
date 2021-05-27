@@ -7,8 +7,6 @@ module ArCache
     it 'should respond to methods' do
       assert_respond_to ArCache::Configuration, :cache_store
       assert_respond_to ArCache::Configuration, :tables_options
-      assert_respond_to ArCache::Configuration, :read_uncommitted=
-      assert_respond_to ArCache::Configuration, :read_uncommitted?
       assert_respond_to ArCache::Configuration, :disabled
       assert_respond_to ArCache::Configuration, :disabled=
       assert_respond_to ArCache::Configuration, :select_disabled

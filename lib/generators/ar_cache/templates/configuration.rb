@@ -2,27 +2,29 @@
 
 # For more information, please see: https://github.com/OuYangJinTing/ar_cache/README.md
 ArCache.configure do |config|
-  # WARNING: The must uncomment only when your database default isolation level is "READ UNCOMMITTED"!
-  # config.read_uncommitted = true # defaul false
+  # NOTE:
+  #   Arcache default use database share lock to ensure that the cache is correct.
+  #   Please change true if it cause some problems.
+  config.cache_lock = false # Boolean
 
   # The cache tool.
-  # config.cache_store = ActiveSupport::Cache::Store # default Rails.cache || ActiveSupport::Cache::MemoryStore.new
+  config.cache_store = defined?(Rails) ? Rails.cache : ActiveSupport::Cache::MemoryStore.new # ActiveSupport::Cache::Store
 
-  # Cache key automatic expiration time.
-  # config.expires_in = Numeric # default 1 week
+  # The cache key valid time.
+  config.expires_in = 1.week # Integer
 
   # ArCache switch.
-  # config.disabled = Boolean # default false
+  config.disabled = false # Boolean
 
-  # Whether to support selecct columns query use cache.
-  # config.select_disabled = Boolean # default true
+  # Whether to support select column sql.
+  config.select_disabled = true # Boolean
 
-  # config.tables_options = {
-  #   table_name: {
-  #     disabled: Boolean,
-  #     select_disabled: Boolean,
-  #     unique_indexes: Array # eg: [:id, [:name, :statue]], The default is the unique index column of the table.
-  #   },
-  #   ...
-  # }
+  config.tables_options = {
+    # table_name: {
+    #   disabled: Boolean,
+    #   select_disabled: Boolean,
+    #   unique_indexes: Array # eg: [:id, [:name, :statue]], The default is the unique index column of the table.
+    # },
+    # ...
+  }
 end

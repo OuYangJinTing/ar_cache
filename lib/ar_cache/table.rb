@@ -37,8 +37,8 @@ module ArCache
       @column_indexes = @unique_indexes.flatten.uniq.freeze
       @column_names = columns.map(&:name).freeze
 
-      @identity_cache_key = "ar:cache:#{@name}".freeze
-      @short_sha1 = Digest::SHA1.hexdigest("#{@disabled}:#{columns.to_json}").first(7).freeze
+      @identity_cache_key = "ar:cache:#{@name}"
+      @short_sha1 = Digest::SHA1.hexdigest("#{@disabled}:#{columns.to_json}").first(7)
 
       # For avoid to skip Arcache read cache, must delete cache when disable Arcache.
       # For keep table's schema is consistent, must delete cache after modified the table.
@@ -64,10 +64,7 @@ module ArCache
       return '' if disabled?
 
       key = "#{identity_cache_key}:#{short_sha1}:#{Time.now.to_f}"
-      expires_in = ArCache.memcached? ? 0 : nil
-      ArCache.write(identity_cache_key, key, raw: true, expires_in: expires_in)
-      # Redis set command unable to set expires_in to -1.
-      ArCache.cache_store.redis.with { |c| c.expire(identity_cache_key, -1) } if ArCache.redis?
+      ArCache.write(identity_cache_key, key, raw: true, expires_in: 100.years)
       key
     end
 

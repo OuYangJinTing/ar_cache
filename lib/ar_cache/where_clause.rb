@@ -2,13 +2,20 @@
 
 module ArCache
   class WhereClause
-    attr_reader :klass, :table, :predicates, :invalid_keys
+    attr_reader :klass, :table, :predicates
 
     def initialize(klass, predicates)
       @klass = klass
       @table = klass.ar_cache_table
       @predicates = predicates
-      @missed_values = []
+    end
+
+    def missed_values
+      @missed_values ||= []
+    end
+
+    def invalid_keys
+      @invalid_keys ||= []
     end
 
     def cacheable?
@@ -60,7 +67,7 @@ module ArCache
 
       @original_cache_hash = @cache_hash
       @cache_hash = ArCache.read_multi(*@cache_hash.keys, raw: true)
-      @original_cache_hash.each { |k, v| @missed_values << v unless @cache_hash.key?(k) }
+      @original_cache_hash.each { |k, v| missed_values << v unless @cache_hash.key?(k) }
       @cache_hash = @cache_hash.invert
 
       @cache_hash
@@ -73,26 +80,28 @@ module ArCache
     end
 
     def missed_hash
-      @missed_hash ||= @missed_values.empty? ? {} : { (@multi_values_key || @index.first) => @missed_values }
+      @missed_hash ||= missed_values.empty? ? {} : { (@multi_values_key || @index.first) => missed_values }
     end
 
     def add_missed_values(key)
       if primary_key_index?
-        @missed_values << cache_hash[key]
+        missed_values << cache_hash[key]
       else
-        @missed_values << @original_cache_hash[cache_hash[key]]
+        missed_values << @original_cache_hash[cache_hash[key]]
       end
     end
 
-    def add_invalid_keys(key)
-      @invalid_keys ||= []
-      # @invalid_keys << key # The primary key index is reliable.
-      @invalid_keys << cache_hash[key] unless primary_key_index?
-      @invalid_keys
+    def add_blank_primary_cache_key(key)
+      invalid_keys << key
+    end
+
+    def add_invalid_second_cache_key(key)
+      # invalid_keys << key # The primary key index is reliable.
+      invalid_keys << cache_hash[key] unless primary_key_index?
     end
 
     def delete_invalid_keys
-      ArCache.delete_multi(@invalid_keys) if @invalid_keys && @invalid_keys.any?
+      ArCache.delete_multi(invalid_keys) if invalid_keys.any?
     end
 
     # This module is based on ActiveRecord::Relation::WhereClause modified

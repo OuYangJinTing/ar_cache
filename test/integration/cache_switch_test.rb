@@ -38,17 +38,17 @@ describe ArCache, 'cache switch' do
       User.ar_cache_table.delete(@user.id)
       User.find(@user.id)
 
-      assert ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id))
+      assert ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id), raw: true)
     end
 
     it 'should delete cache' do
       User.find(@user.id)
 
-      assert ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id))
+      assert ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id), raw: true)
 
       User.ar_cache_table.delete(@user.id)
 
-      assert_not ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id))
+      assert_not ArCache.exist?(User.ar_cache_table.primary_cache_key(@user.id), raw: true)
     end
 
     it 'should read cache' do

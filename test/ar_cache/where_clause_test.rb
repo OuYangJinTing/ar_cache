@@ -10,7 +10,6 @@ module ArCache
       assert_respond_to where_clause, :klass
       assert_respond_to where_clause, :table
       assert_respond_to where_clause, :predicates
-      assert_respond_to where_clause, :invalid_keys
     end
 
     describe '#cacheable?' do

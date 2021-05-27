@@ -5,11 +5,19 @@ module ArCache
     module ConnectionAdapters
       module NullTransaction
         def delete_ar_cache_primary_keys(keys, table)
-          ArCache.delete_multi(keys) unless table.disabled?
+          handle_ar_cache_primary_keys(keys) unless table.disabled?
         end
 
         def update_ar_cache_table(table)
           table.update_cache
+        end
+
+        def handle_ar_cache_primary_keys(keys)
+          if ArCache::Configuration.cache_lock?
+            keys.each { |k| ArCache.write(k, ArCache::PLACEHOLDER, raw: true, expires_in: 1.day) }
+          else
+            ArCache.delete_multi(keys)
+          end
         end
       end
 
@@ -45,19 +53,16 @@ module ArCache
           super
         ensure
           if @run_commit_callbacks
-            ArCache.delete_multi(ar_cache_primary_keys.uniq) if ar_cache_primary_keys.any?
+            handle_ar_cache_primary_keys(ar_cache_primary_keys.uniq) if ar_cache_primary_keys.any?
             ar_cache_tables.uniq(&:name).each(&:update_cache) if ar_cache_tables.any?
           else
-            transaction = connection.current_transaction
-            transaction.ar_cache_tables.push(*ar_cache_tables)
-            transaction.ar_cache_primary_keys.push(*ar_cache_primary_keys)
+            connection.current_transaction.ar_cache_tables.push(*ar_cache_tables)
+            connection.current_transaction.ar_cache_primary_keys.push(*ar_cache_primary_keys)
           end
         end
 
         def read_uncommitted?
-          ArCache::Configuration.read_uncommitted? ||
-            isolation_level == :read_uncommitted ||
-            !connection.transaction_manager.fully_joinable?
+          isolation_level == :read_uncommitted || !connection.transaction_manager.fully_joinable?
         end
       end
 
