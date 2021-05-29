@@ -1,4 +1,4 @@
-# ArCache
+# ArCache (This is outdated, please see [中文文档](README.zh-CN.md))
 
 ![Test Status](https://github.com/OuYangJinTing/ar_cache/workflows/CI/badge.svg)
 [![Gem Version](https://badge.fury.io/rb/ar_cache.svg)](https://badge.fury.io/rb/ar_cache)

@@ -26,17 +26,21 @@ module ArCache
       0
     end
 
-    def read(where_clause, select_values = nil, &block) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def read(where_clause, select_values = nil, &block) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
       entries_hash = ArCache.read_multi(*where_clause.cache_hash.keys, raw: true)
-      entries_hash = entries_hash.each do |k, v|
-        if v == ArCache::PLACEHOLDER
-          entries_hash.delete(k)
+      where_clause.cache_hash.each_key do |k|
+        v = entries_hash[k]
+
+        if v.nil?
+          where_clause.add_missed_values(k)
+        elsif v == ArCache::PLACEHOLDER
+          where_clause.add_missed_values(k)
           where_clause.add_blank_primary_cache_key(k)
+          entries_hash.delete(k)
         else
           entries_hash[k] = load_attributes(v)
         end
       end
-      where_clause.cache_hash.each_key { |k| where_clause.add_missed_values(k) unless entries_hash.key?(k) }
 
       records = []
 
