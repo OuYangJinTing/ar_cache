@@ -12,47 +12,31 @@ describe ArCache, 'cache remove' do
   describe 'should remove cache when use unique index update or delete' do
     describe 'executed callbacks methods' do
       it 'update record' do
-        assert_no_difference('ArCache::Record.get(User.table_name).version') do
-          assert_no_queries { User.find(@user1.id) }
-
-          @user1.update_attribute(:name, :foobar1_updated)
-
-          assert_queries { User.find(@user1.id) }
-          assert_no_queries { User.find(@user1.id) }
-        end
+        assert_no_queries { User.find(@user1.id) }
+        @user1.update_attribute(:name, :foobar1_updated)
+        assert_queries { User.find(@user1.id) }
+        assert_no_queries { User.find(@user1.id) }
       end
 
       it 'destroy record' do
-        assert_no_difference('ArCache::Record.get(User.table_name).version') do
-          assert_no_queries { User.find(@user1.id) }
-
-          @user1.destroy
-
-          assert_raises(ActiveRecord::RecordNotFound) { User.find(@user1.id) }
-        end
+        assert_no_queries { User.find(@user1.id) }
+        @user1.destroy
+        assert_raises(ActiveRecord::RecordNotFound) { User.find(@user1.id) }
       end
     end
 
     describe 'skip callbacks methods' do
       it 'update record' do
-        assert_no_difference('ArCache::Record.get(User.table_name).version') do
-          assert_no_queries { User.find(@user1.id) }
-
-          User.where(id: @user1.id).update_all(name: :foobar1_updated)
-
-          assert_queries { User.find(@user1.id) }
-          assert_no_queries { User.find(@user1.id) }
-        end
+        assert_no_queries { User.find(@user1.id) }
+        User.where(id: @user1.id).update_all(name: :foobar1_updated)
+        assert_queries { User.find(@user1.id) }
+        assert_no_queries { User.find(@user1.id) }
       end
 
       it 'destroy record' do
-        assert_no_difference('ArCache::Record.get(User.table_name).version') do
-          assert_no_queries { User.find(@user1.id) }
-
-          User.where(id: @user1.id).delete_all
-
-          assert_raises(ActiveRecord::RecordNotFound) { User.find(@user1.id) }
-        end
+        assert_no_queries { User.find(@user1.id) }
+        User.where(id: @user1.id).delete_all
+        assert_raises(ActiveRecord::RecordNotFound) { User.find(@user1.id) }
       end
     end
   end

@@ -4,18 +4,23 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module DatabaseStatements
+        def select_all(arel, ...)
+          result = super
+          klass, select_values = arel.try(:klass_and_select_values)
+          return result if klass.nil?
+
+          klass.ar_cache_table.write(result.to_a)
+
+          if select_values
+            result.to_a.each { |r| r.slice!(*select_values) }
+          elsif klass.ignored_columns.any?
+            result.to_a.each { |r| r.except!(*klass.ignored_columns) }
+          end
+
+          result
+        end
+
         # def insert(arel, ...)
-        #   super.tap do
-        #     if arel.is_a?(String)
-        #       sql = arel.downcase
-        #       ArCache::Table.all.each do |table|
-        #         current_transaction.add_changed_table(table.name) if sql.include?(table.name)
-        #       end
-        #     else # is Arel::InsertManager
-        #       klass = arel.ast.relation.instance_variable_get(:@klass)
-        #       current_transaction.add_changed_table(klass.table_name)
-        #     end
-        #   end
         # end
         # alias create insert
 
@@ -46,24 +51,24 @@ module ArCache
         end
 
         private def update_ar_cache_by_arel(arel)
-          return if ArCache.expire?
+          return if ArCache.skip_expire?
 
           arel_table = arel.ast.relation.is_a?(Arel::Table) ? arel.ast.relation : arel.ast.relation.left
           klass = arel_table.instance_variable_get(:@klass)
-          current_transaction.update_ar_cache_table(klass.ar_cache_table) unless klass.ar_cache_table.disabled?
+          current_transaction.update_ar_cache_table(klass.ar_cache_table)
         end
 
         private def update_ar_cache_by_sql(sql)
           sql = sql.downcase
 
           ArCache::Table.all.each do |table|
-            current_transaction.update_ar_cache_table(table) if !table.disabled? && sql.include?(table.name)
+            current_transaction.update_ar_cache_table(table) if sql.include?(table.name)
           end
         end
 
         private def update_ar_cache_by_table(table_name)
           ArCache::Table.all.each do |table|
-            current_transaction.update_ar_cache_table(table) if !table.disabled? && table_name.casecmp?(table.name)
+            break current_transaction.update_ar_cache_table(table) if table_name == table.name
           end
         end
       end

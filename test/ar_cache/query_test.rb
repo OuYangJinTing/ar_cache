@@ -4,6 +4,14 @@ require 'test_helper'
 
 module ArCache
   describe Query do
+    let(:query) { ArCache::Query.new(User.all) }
+
+    it 'should respond to methods' do
+      assert_respond_to query, :relation
+      assert_respond_to query, :table
+      assert_respond_to query, :where_clause
+    end
+
     describe '#exec_queries' do
       let(:user1) { User.create(name: :foo, email: 'foo@test.com') }
       let(:user2) { User.create(name: :bar, email: 'bar@test.com') }
@@ -22,9 +30,9 @@ module ArCache
         capture_sql do
           users = User.includes(:books).where(id: [user1.id, user2.id]).readonly!.load
           assert_equal 2, users.size
-          assert_equal 2, ArCacheTestCase::SQLCounter.log.size
-          assert_includes ArCacheTestCase::SQLCounter.log.first, 'WHERE "users"."id" ='
-          assert_includes ArCacheTestCase::SQLCounter.log.last, 'FROM "books"'
+          assert_equal 2, ArCache::SQLCounter.log.size
+          assert_includes ArCache::SQLCounter.log.first, 'WHERE "users"."id" ='
+          assert_includes ArCache::SQLCounter.log.last, 'FROM "books"'
           assert users.all?(&:readonly?)
         end
       end

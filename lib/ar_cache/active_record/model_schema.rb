@@ -9,13 +9,7 @@ module ArCache
         end
 
         def ar_cache_table
-          @ar_cache_table ||= begin
-            if abstract_class? || table_name == 'ar_cache_records'
-              ArCache::MockTable
-            else
-              ArCache::Table.new(table_name)
-            end
-          end
+          @ar_cache_table ||= abstract_class? ? ArCache::MockTable : ArCache::Table.new(table_name)
         end
       end
 

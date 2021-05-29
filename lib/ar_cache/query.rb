@@ -2,6 +2,10 @@
 
 module ArCache
   class Query
+    @lock_statement = 'FOR SHARE'
+    singleton_class.attr_accessor :lock_statement
+    delegate :lock_statement, :lock_statement=, to: 'self.class'
+
     attr_reader :relation, :table, :where_clause
 
     def initialize(relation)
@@ -12,19 +16,24 @@ module ArCache
 
     def exec_queries(&block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return [] if relation.where_clause.contradiction?
-      return ArCache.skip { relation.send(:exec_queries, &block) } unless exec_queries_cacheable?
+      return ArCache.skip_cache { relation.send(:exec_queries, &block) } unless exec_queries_cacheable?
 
       records = table.read(where_clause, @select_values, &block)
 
-      missed_relation = if records.empty?
-                          relation
-                        elsif where_clause.missed_hash.any?
-                          relation.rewhere(where_clause.missed_hash)
-                        end
+      if where_clause.missed_hash.any?
+        begin
+          missed_relation = relation.rewhere(where_clause.missed_hash).reselect('*').lock(lock_statement)
+          missed_relation.arel.singleton_class.attr_accessor(:klass_and_select_values)
+          missed_relation.arel.klass_and_select_values = [relation.klass, @select_values]
+          missed_relation.connection.transaction do
+            records += missed_relation.find_by_sql(missed_relation.arel, &block)
+          end
+        rescue ::ActiveRecord::StatementInvalid => e
+          raise e if relation.connection.class.name != 'ActiveRecord::ConnectionAdapters::Mysql2Adapter'
+          raise e if lock_statement == 'LOCK IN SHARE MODE'
 
-      if missed_relation
-        records += relation.find_by_sql(missed_relation.arel, &block).tap do |rs|
-          table.write(rs) if relation.select_values.empty?
+          self.lock_statement = 'LOCK IN SHARE MODE'
+          retry
         end
       end
 
@@ -39,7 +48,7 @@ module ArCache
     end
 
     def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-      return false if relation.klass.ar_cache_table.disabled?
+      return false if table.disabled?
       return false if relation.skip_query_cache_value
       return false if relation.lock_value
       return false if relation.distinct_value
@@ -48,7 +57,7 @@ module ArCache
       return false if relation.left_outer_joins_values.any?
       return false if relation.offset_value
       return false if relation.eager_loading?
-      return false if relation.connection.transaction_manager.changed_table?(table.name)
+      return false if relation.connection.transaction_manager.transaction_table?(table.name)
       return false unless relation.from_clause.empty?
       return false unless where_clause.cacheable?
       return false unless select_values_cacheable?

@@ -1,4 +1,4 @@
-# ArCache
+# ArCache (This is outdated, please see [中文文档](README.zh-CN.md))
 
 ![Test Status](https://github.com/OuYangJinTing/ar_cache/workflows/CI/badge.svg)
 [![Gem Version](https://badge.fury.io/rb/ar_cache.svg)](https://badge.fury.io/rb/ar_cache)
@@ -16,7 +16,7 @@ then query the database and write the result to the cache.
 - `Read cache`: Automatically intercept ActiveRecord queries, then try to fetch data from cache.
 - `Write cache`: If the query is cacheable and the cached data is not exists, it will be automatically written to the cache after the query.
 - `Expire cache`: Automatically expire cache after updated/modified data.
-- `Iterative cache`: The cache version will be updated after table fields, `ArCache` switch or `ArCache` coder changed.
+- `Iterative cache`: The cache version will be updated after table fields or `ArCache` switch changed.
 - `Shared cache`: The cache is not only used with ActiveRecord, you can easily use it in other places.([see examples](examples))
 
 ## Installation
@@ -55,11 +55,11 @@ rake db:migrate
 
 Skip cache:
 
-- `ArCache#skip`, eg:
+- `ArCache#skip_cache`, eg:
 
 ```ruby
 # All queries in the block will not use the cache.
-ArCache.skip { User.find(1) }
+ArCache.skip_cache { User.find(1) }
 ```
 
 - `ActiveRecord::Persistence#reload`, eg:

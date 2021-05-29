@@ -11,12 +11,12 @@ module ArCache
         true
       end
 
-      def version
-        -1
+      def cache_key_prefix
+        ''
       end
 
-      def update_version(...)
-        -1
+      def update_cache
+        ''
       end
 
       def primary_key

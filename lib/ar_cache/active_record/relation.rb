@@ -4,22 +4,22 @@ module ArCache
   module ActiveRecord
     module Relation
       def reload
-        loaded? ? ArCache.skip { super } : super
+        loaded? ? ArCache.skip_cache { super } : super
       end
 
       def explain
-        ArCache.skip { super }
+        ArCache.skip_cache { super }
       end
 
       def update_all(...)
-        ArCache.expire { delete_ar_cache_keys ? super : 0 }
+        ArCache.skip_expire { delete_ar_cache_primary_keys ? super : 0 }
       end
 
       def delete_all
-        ArCache.expire { delete_ar_cache_keys ? super : 0 }
+        ArCache.skip_expire { delete_ar_cache_primary_keys ? super : 0 }
       end
 
-      private def delete_ar_cache_keys
+      private def delete_ar_cache_primary_keys
         return true if klass.ar_cache_table.disabled?
 
         where_clause = ArCache::WhereClause.new(klass, arel.constraints)
@@ -31,13 +31,12 @@ module ArCache
 
         return false if keys.empty?
 
-        @klass.connection.current_transaction.delete_ar_cache_keys(keys)
-        @klass.connection.current_transaction.add_changed_table(@klass.table_name)
+        @klass.connection.current_transaction.delete_ar_cache_primary_keys(keys, @klass.ar_cache_table)
         true
       end
 
       private def exec_queries(&block)
-        ArCache.skip? ? super : ArCache::Query.new(self).exec_queries(&block).freeze
+        ArCache.skip_cache? ? super : ArCache::Query.new(self).exec_queries(&block).freeze
       end
     end
   end

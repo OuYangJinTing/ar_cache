@@ -4,41 +4,45 @@ module ArCache
   class Table
     include Marshal
 
-    OPTIONS = %i[disabled select_disabled unique_indexes].freeze
-
     singleton_class.attr_reader :all
 
-    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :md5, :cache_key_prefix
-
-    delegate :connection, to: ActiveRecord::Base, private: true
-
     @lock = Mutex.new
-
     @all = []
 
     def self.new(table_name)
       @lock.synchronize do
-        @all.find { |table| table.name == table_name } || super
+        table = @all.find { |t| t.name == table_name }
+
+        unless table
+          table = super
+          @all << table
+        end
+
+        table
       end
     end
 
+    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :identity_cache_key, :short_sha1
+
     def initialize(table_name)
       @name = table_name
-      @cache_key_prefix = "arcache:#{@name}:version"
-      @primary_key = connection.primary_key(@name)
-      columns = connection.columns(@name)
+      @primary_key = ::ActiveRecord::Base.connection.primary_key(@name)
+
       options = ArCache::Configuration.get_table_options(@name)
-      @unique_indexes = normalize_unique_indexes(options.delete(:unique_indexes), columns).freeze
-      options.each { |k, v| instance_variable_set("@#{k}", v) }
-      @disabled = true if @primary_key.nil? # ArCache is depend on primary key implementation.
-      @column_names = columns.map(&:name).freeze
+      @disabled = @primary_key.nil? ? true : options[:disabled] # ArCache can't work if primary key does not exist.
+      @select_disabled = options[:select_disabled]
+
+      columns = ::ActiveRecord::Base.connection.columns(@name)
+      @unique_indexes = normalize_unique_indexes(options[:unique_indexes], columns).freeze
       @column_indexes = @unique_indexes.flatten.uniq.freeze
-      coder = ArCache::Configuration.coder
-      @md5 = Digest::MD5.hexdigest("#{coder}-#{@disabled}-#{columns.to_json}")
+      @column_names = columns.map(&:name).freeze
 
-      ArCache::Record.store(self)
+      @identity_cache_key = "ar:cache:#{@name}"
+      @short_sha1 = Digest::SHA1.hexdigest("#{@disabled}:#{columns.to_json}").first(7)
 
-      self.class.all << self
+      # For avoid to skip Arcache read cache, must delete cache when disable Arcache.
+      # For keep table's schema is consistent, must delete cache after modified the table.
+      ArCache.delete(@identity_cache_key) if disabled? || !cache_key_prefix.start_with?("#{@identity_cache_key}:#{@short_sha1}") # rubocop:disable Layout/LineLength
     end
 
     def disabled?
@@ -49,26 +53,23 @@ module ArCache
       @select_disabled
     end
 
-    def version
-      version = ArCache::Store.read(cache_key_prefix)
-      unless version
-        version = ArCache::Record.version(self)
-        ArCache::Store.write(cache_key_prefix, version)
-      end
+    def cache_key_prefix
+      return '' if disabled?
 
-      version
+      ArCache.read(identity_cache_key, raw: true) || update_cache
     end
 
-    def update_version
-      return -1 if disabled?
+    # In order to avoid cache avalanche, we must set cache_key_prefix never expired.
+    def update_cache
+      return '' if disabled?
 
-      version = ArCache::Record.update_version(self)
-      ArCache::Store.write(cache_key_prefix, version)
-      version
+      key = "#{identity_cache_key}:#{short_sha1}:#{Time.now.to_f}"
+      ArCache.write(identity_cache_key, key, raw: true, expires_in: 100.years)
+      key
     end
 
     def primary_cache_key(id)
-      "#{cache_key_prefix}:#{version}:#{primary_key}=#{id}"
+      "#{cache_key_prefix}:#{primary_key}=#{id}"
     end
 
     def cache_key(where_values_hash, index, multi_values_key = nil, key_value = nil)
@@ -77,39 +78,32 @@ module ArCache
         "#{column}=#{value}"
       end.sort.join('&')
 
-      "#{cache_key_prefix}:#{version}:#{where_value}"
+      "#{cache_key_prefix}:#{where_value}"
     end
 
     private def normalize_unique_indexes(indexes, columns)
-      indexes = indexes.empty? ? query_unique_indexes(columns) : custom_unique_indexes(indexes, columns)
+      indexes = indexes.empty? ? query_unique_indexes(columns) : validate_unique_indexes(indexes, columns)
       (indexes - [primary_key]).sort_by(&:size).unshift([primary_key])
     end
 
-    private def query_unique_indexes(columns) # rubocop:disable Metrics/CyclomaticComplexity
-      connection.indexes(name).filter_map do |index|
+    private def query_unique_indexes(columns)
+      ::ActiveRecord::Base.connection.indexes(name).filter_map do |index|
         next unless index.unique
+        next unless index.columns.is_a?(Array)
 
         index.columns.each do |column|
-          column = columns.find { |c| c.name == column }
-          next if column.null
-          next if column.type == :datetime
+          next if columns.none? { |c| c.name == column }
         end
 
         index.columns
-      rescue NoMethodError # The index.columns maybe isn't Array type
-        next
       end
     end
 
-    private def custom_unique_indexes(indexes, columns)
-      indexes.each do |index|
-        index.each do |field|
-          column = columns.find { |c| c.name == field }
-          raise ArgumentError, "The #{name} table not found #{field.inspect} column" if column.nil?
-
-          if column.type == :datetime
-            raise ArgumentError, "The #{field.inspect} is datetime type, ArCache do't support datetime type"
-          end
+    private def validate_unique_indexes(indexes, columns)
+      indexes.each do |attrs|
+        attrs.each do |attr|
+          column = columns.find { |c| c.name == attr }
+          raise ArgumentError, "The #{name} table not found #{attr} column" if column.nil?
         end
       end
     end
