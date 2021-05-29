@@ -3,18 +3,19 @@
 ![Test Status](https://github.com/OuYangJinTing/ar_cache/workflows/CI/badge.svg)
 [![Gem Version](https://badge.fury.io/rb/ar_cache.svg)](https://badge.fury.io/rb/ar_cache)
 
-`ArCache` 是一个现代的 `ActiveRecord` 查询缓存库，它受 [`cache-money`](https://github.com/ngmoco/cache-money) 和 [`second_level_cache`](https://github.com/hooopo/second_level_cache) 的启发而创作。
+`ArCache` 是一个现代的 `ActiveRecord` 查询缓存库，它受 [`cache-money`](https://github.com/ngmoco/cache-money) 和 [`second_level_cache`](https://github.com/hooopo/second_level_cache) 的启发而创作。  
 当 `ActiveRecord` 实例化查询条件命中唯一索引时，`ArCache` 会拦截此次查询，尝试从缓存中获取结果；如果缓存缺失，
-将在 `ActiveRecord` 查询完成后自动填充缓存。`ArCache` 会自动维护缓存的正确性。
+将在 `ActiveRecord` 查询完成后自动填充缓存。  
+`ArCache` 会自动维护缓存的正确性。
 
 ## 特点
 
-- **低影响**：如果项目里数据库操作的相关代码符合 `ActiveRecord` 风格的话，那么你可以直接引入 `ArCache`，无需修改任何代码。（[具体细节](#警告)）
+- **低影响**：如果项目里数据库操作的相关代码符合 `ActiveRecord` 风格的话，那么你可以直接引入 `ArCache`，无需修改任何代码。（[详细](#警告)）
 - **读缓存**：当实例化查询的条件命中唯一索引时，`ArCache` 会尝试从缓存中获取结果返回。
 - **写缓存**：当读缓存操作没有获取到结果时，`ArCache` 会在 `ActiveRecord` 查询操作结束后，写入缓存。
 - **删缓存**：在更新或删除数据后，`ArCache` 会自动移除对应的缓存。
 - **迭代缓存**：当表结构发生改变后，`ArCache` 会更新这个表对应的缓存版本。
-- **共享缓存**：`ArCache` 里面缓存是完整的表字段和数据的哈希结果的 `json` 序列化字符串（仅当使用 `redis/memcached` 作为存储器时），因此缓存的使用是没有局限的。（[实例](examples)）
+- **共享缓存**：`ArCache` 里面缓存是完整表字段与数据的哈希结果的 `json` 序列化字符串（仅当使用 `redis/memcached` 作为存储器时），因此缓存的使用是没有局限的。（[实例](examples)）
 
 ## 安装
 
@@ -45,6 +46,8 @@ rails generate ar_cache:install
 关于配置项的说明，请直接查看 [configuration.rb](lib/generators/ar_cache/templates/configuration.rb) 文件.
 
 ## 用法
+
+只需要了解如何删除缓存和跳过缓存即可。
 
 删除缓存：
 
@@ -85,8 +88,6 @@ User.where(id: 1).load.reload
 user.association(:account).load_target.reload
 ```
 
-其它的都是没必要知道的。
-
 ## 可读缓存的查询
 
 必须满足下列全部条件:
@@ -118,7 +119,7 @@ User.includes(:account).where(id: [1, 2]) # ActiveRecord 的预加载是可读�
 User.first.account # ActiveRecord 的关联对象是可读缓存的（仅当为 has_one 关联时）
 ```
 
-NOTE: `has_many` 的关联缓存，后续会尝试支持，但希望不大。
+注意: `has_many` 的关联缓存，目前是不支持的，后续会尝试支持，但希望不大。
 
 ## 缓存迭代
 
