@@ -31,7 +31,7 @@ module ArCache
       after { ArCache::Configuration.tables_options = @source_configuration }
 
       it '#cache_store=' do
-        assert_raise(ArgumentError) { ArCache::Configuration.cache_store = {} }
+        assert_raise(InvalidStoreError) { ArCache::Configuration.cache_store = {} }
       end
 
       describe '#tables_options=' do

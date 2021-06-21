@@ -64,7 +64,7 @@ module ArCache
       return '' if disabled?
 
       key = "#{identity_cache_key}:#{short_sha1}:#{Time.now.to_f}"
-      ArCache.write(identity_cache_key, key, raw: true, expires_in: 100.years)
+      ArCache.write(identity_cache_key, key, raw: true, expires_in: 20.years)
       key
     end
 
@@ -103,7 +103,7 @@ module ArCache
       indexes.each do |attrs|
         attrs.each do |attr|
           column = columns.find { |c| c.name == attr }
-          raise ArgumentError, "The #{name} table not found #{attr} column" if column.nil?
+          raise ColumnNotFound, "The #{name} table not found #{attr} column" if column.nil?
         end
       end
     end

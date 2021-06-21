@@ -5,6 +5,7 @@ require 'active_record'
 require 'oj'
 
 require 'ar_cache/version'
+require 'ar_cache/errors'
 require 'ar_cache/configuration'
 require 'ar_cache/marshal'
 require 'ar_cache/table'
@@ -71,5 +72,11 @@ module ArCache
     def load_attributes(attributes)
       memcached? || redis? ? Oj.load(attributes) : attributes
     end
+
+    def lock_key(key)
+      ArCache.write(key, PLACEHOLDER, raw: true, expires_in: 1.hour)
+    end
   end
 end
+
+require_relative './generators/ar_cache/templates/configuration'

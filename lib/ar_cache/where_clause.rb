@@ -74,7 +74,7 @@ module ArCache
     end
 
     def primary_cache_keys
-      raise 'Does not detect primary key index' unless primary_key_index?
+      raise NotPrimaryIndex, 'Does not detect primary key index' unless primary_key_index?
 
       @primary_cache_keys ||= Array(where_values_hash[table.primary_key]).map { |v| table.primary_cache_key(v) }
     end

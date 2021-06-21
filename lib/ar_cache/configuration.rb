@@ -5,7 +5,7 @@ module ArCache
     class << self
       attr_writer :cache_lock
       attr_reader :cache_store, :tables_options
-      attr_accessor :disabled, :select_disabled, :expires_in
+      attr_accessor :disabled, :select_disabled, :expires_in, :lock_statement
 
       def configure
         block_given? ? yield(self) : self
@@ -25,7 +25,7 @@ module ArCache
 
       def cache_store=(cache_store)
         if !cache_store.is_a?(ActiveSupport::Cache::Store) # rubocop:disable Style/GuardClause
-          raise ArgumentError, 'The cache_store must be an ActiveSupport::Cache::Store object'
+          raise InvalidStoreError, 'The cache_store must be an ActiveSupport::Cache::Store object'
         elsif cache_store.class.name == 'ActiveSupport::Cache::RedisCacheStore' # rubocop:disable Style/ClassEqualityComparison
           @redis = true
         elsif cache_store.class.name == 'ActiveSupport::Cache::MemCacheStore' # rubocop:disable Style/ClassEqualityComparison

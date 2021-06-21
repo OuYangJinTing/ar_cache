@@ -11,12 +11,19 @@ module ArCache
       ArCache.delete_multi(ids.map { |id| primary_cache_key(id) })
     end
 
-    def write(records)
+    def write(records) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
       return -1 if disabled?
 
       records.each do |attributes|
         key = primary_cache_key(attributes[primary_key])
-        ArCache.write(key, dump_attributes(attributes), unless_exist: cache_lock?, raw: true, expires_in: expires_in)
+        stringify_attributes = dump_attributes(attributes)
+        bool = ArCache.write(key, stringify_attributes, unless_exist: cache_lock?, raw: true, expires_in: expires_in)
+        if cache_lock? && !bool
+          value = ArCache.read(key, raw: true)
+          next if value == ArCache::PLACEHOLDER
+          next ArCache.lock_key(key) if value != stringify_attributes
+        end
+
         unique_indexes.each_with_index do |index, i|
           # The first index is primary key, should skip it.
           ArCache.write(cache_key(attributes, index), key, raw: true, expires_in: expires_in) unless i.zero?
@@ -26,14 +33,15 @@ module ArCache
       0
     end
 
-    def read(where_clause, select_values = nil, &block) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Metrics/MethodLength
+    def read(where_clause, select_values = nil, &block) # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength
       entries_hash = ArCache.read_multi(*where_clause.cache_hash.keys, raw: true)
       where_clause.cache_hash.each_key do |k|
         v = entries_hash[k]
 
-        if v.nil?
+        case v
+        when nil
           where_clause.add_missed_values(k)
-        elsif v == ArCache::PLACEHOLDER
+        when ArCache::PLACEHOLDER
           where_clause.add_missed_values(k)
           where_clause.add_blank_primary_cache_key(k)
           entries_hash.delete(k)

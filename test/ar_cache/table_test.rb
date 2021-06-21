@@ -77,7 +77,7 @@ module ArCache
       let(:columns) { User.connection.columns(User.table_name) }
 
       it 'noexists column' do
-        assert_raises(ArgumentError) do
+        assert_raises(ColumnNotFound) do
           table.send(:validate_unique_indexes, [['noexists']], columns)
         end
       end

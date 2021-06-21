@@ -14,8 +14,6 @@ Minitest::Spec.register_spec_type(//, ArCache::TestCase)
 ActiveRecord::Base.logger = Logger.new($stdout) if ENV['DEBUG']
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
-instance_eval(File.read(File.expand_path('../lib/generators/ar_cache/templates/configuration.rb', __dir__)))
-
 ArCache.configure do |config|
   config.cache_store = ActiveSupport::Cache::RedisCacheStore.new if ENV['CACHE_MODE'] == 'redis'
   config.cache_lock = true if ENV['CACHE_MODE'] == 'redis'
