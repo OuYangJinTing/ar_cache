@@ -73,3 +73,5 @@ module ArCache
     end
   end
 end
+
+require_relative './generators/ar_cache/templates/configuration'
