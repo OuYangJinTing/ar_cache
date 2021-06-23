@@ -2,9 +2,7 @@
 
 module ArCache
   class Query
-    @lock_statement = 'FOR SHARE'
-    singleton_class.attr_accessor :lock_statement
-    delegate :lock_statement, :lock_statement=, to: 'self.class'
+    delegate :lock_statement, :cache_lock?, to: ArCache::Configuration
 
     attr_reader :relation, :table, :where_clause
 
@@ -21,19 +19,16 @@ module ArCache
       records = table.read(where_clause, @select_values, &block)
 
       if where_clause.missed_hash.any?
-        begin
-          missed_relation = relation.rewhere(where_clause.missed_hash).reselect('*').lock(lock_statement)
-          missed_relation.arel.singleton_class.attr_accessor(:klass_and_select_values)
-          missed_relation.arel.klass_and_select_values = [relation.klass, @select_values]
+        missed_relation = relation.rewhere(where_clause.missed_hash).reselect('*')
+        missed_relation = missed_relation.lock(lock_statement) unless cache_lock?
+        missed_relation.arel.singleton_class.attr_accessor(:klass_and_select_values)
+        missed_relation.arel.klass_and_select_values = [relation.klass, @select_values]
+        if cache_lock?
+          records += missed_relation.find_by_sql(missed_relation.arel, &block)
+        else
           missed_relation.connection.transaction do
             records += missed_relation.find_by_sql(missed_relation.arel, &block)
           end
-        rescue ::ActiveRecord::StatementInvalid => e
-          raise e if relation.connection.class.name != 'ActiveRecord::ConnectionAdapters::Mysql2Adapter'
-          raise e if lock_statement == 'LOCK IN SHARE MODE'
-
-          self.lock_statement = 'LOCK IN SHARE MODE'
-          retry
         end
       end
 

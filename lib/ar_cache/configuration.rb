@@ -3,7 +3,7 @@
 module ArCache
   class Configuration
     class << self
-      attr_writer :cache_lock
+      attr_writer :cache_lock, :lock_statement
       attr_reader :cache_store, :tables_options
       attr_accessor :disabled, :select_disabled, :expires_in
 
@@ -45,6 +45,19 @@ module ArCache
         options[:select_disabled] = select_disabled unless options.key?(:select_disabled)
         options[:unique_indexes] = Array(options[:unique_indexes]).map { |index| Array(index).map(&:to_s).uniq }.uniq
         options
+      end
+
+      def lock_statement
+        @lock_statement ||= case ::ActiveRecord::Base.connection.class.name
+                            when 'ActiveRecord::ConnectionAdapters::PostgreSQLAdapter'
+                              'FOR SHARE'
+                            when 'ActiveRecord::ConnectionAdapters::Mysql2Adapter'
+                              'LOCK IN SHARE MODE'
+                            when 'ActiveRecord::ConnectionAdapters::SQLite3Adapter'
+                              raise "SQLite3 don't support lock statement, please use cache lock."
+                            else
+                              raise "Arcache can't identify database, please defined lock statement or use cache lock"
+                            end
       end
     end
   end
