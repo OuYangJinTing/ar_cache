@@ -16,7 +16,7 @@ ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:'
 
 ArCache.configure do |config|
   config.cache_store = ActiveSupport::Cache::RedisCacheStore.new if ENV['CACHE_MODE'] == 'redis'
-  config.cache_lock = true if ENV['CACHE_MODE'] == 'redis'
+  config.cache_lock = true
   config.select_disabled = false
   config.tables_options = {
     empties: {
