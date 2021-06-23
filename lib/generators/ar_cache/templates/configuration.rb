@@ -2,26 +2,31 @@
 
 # For more information, please see: https://github.com/OuYangJinTing/ar_cache/README.md
 ArCache.configure do |config|
-  # NOTE: Please change true if database happened some problems
-  # Arcache default use database share lock to ensure that the cache is correct.
-  config.cache_lock = false # Boolean
-
-  # The cache tool.
+  # The cache tool. It must be an instance of ActiveSupport::Cache::Store.
   config.cache_store = defined?(Rails) ? Rails.cache : ActiveSupport::Cache::MemoryStore.new
+
+  # NOTE: Please use cache lock if it casue database happened dead lock.
+  # ArCache default use database share lock('FOR SHARE' or 'LOCK IN SHARE MODE') to ensure that the cache is correct.
+  # You can customize the lock statement, if your database don't support lock (eg: SQLite3), please use cache lock.
+  # config.lock_statement = 'custom lock statement'
+
+  # WARNING: If the cache store is not Redis nor Memcached, the cache lock may be unreliable.
+  config.cache_lock = false # Boolean
 
   # The cache key valid time.
   config.expires_in = 1.week # Integer
 
-  # ArCache switch.
+  # ArCache switch (default).
   config.disabled = false # Boolean
 
-  # Whether to support select column sql.
+  # Whether to support select column sql (default)..
   config.select_disabled = true # Boolean
 
+  # WARNING: If you use database lock, you should not custom unique index, otherwise may be happen lock table.
   config.tables_options = {
-    # table_name: {
-    #   disabled: Boolean,
-    #   select_disabled: Boolean,
+    # table_name: { # Database's table name.
+    #   disabled: Boolean, # sArCache switch.
+    #   select_disabled: Boolean, # Whether to support select column sql.
     #   unique_indexes: Array # eg: [:id, [:name, :statue]], The default is the unique index column of the table.
     # },
     # ...
