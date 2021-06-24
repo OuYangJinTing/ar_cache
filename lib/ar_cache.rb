@@ -71,6 +71,10 @@ module ArCache
     def load_attributes(attributes)
       memcached? || redis? ? Oj.load(attributes) : attributes
     end
+
+    def lock_key(key)
+      ArCache.write(key, PLACEHOLDER, raw: true, expires_in: 1.hour)
+    end
   end
 end
 
