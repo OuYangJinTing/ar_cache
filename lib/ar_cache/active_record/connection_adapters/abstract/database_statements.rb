@@ -20,9 +20,20 @@ module ArCache
           result
         end
 
-        # def insert(arel, ...)
-        # end
-        # alias create insert
+        def insert(arel, ...)
+          super.tap do
+            if arel.is_a?(String)
+              sql = arel.downcase
+
+              ArCache::Table.all.each do |table|
+                transaction_manager.add_transaction_table(table.name) if sql.include?(table.name)
+              end
+            else
+              transaction_manager.add_transaction_table(arel.ast.relation.name)
+            end
+          end
+        end
+        alias create insert
 
         def update(arel, ...)
           super.tap { |num| update_ar_cache(arel) unless num.zero? }
