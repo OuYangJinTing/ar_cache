@@ -73,7 +73,7 @@ module ArCache
         end
 
         def add_transaction_table(table_name)
-          @transaction_tables[table_name] = true if fully_joinable?
+          @transaction_tables[table_name] = true if fully_joinable? && @stack.any?
         end
 
         def transaction_table?(table_name)

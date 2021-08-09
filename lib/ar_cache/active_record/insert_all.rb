@@ -5,7 +5,11 @@ module ArCache
     module InsertAll
       def execute
         super.tap do
-          connection.current_transaction.update_ar_cache_table(model.ar_cache_table) if on_duplicate == :update
+          if on_duplicate == :update
+            connection.current_transaction.update_ar_cache_table(model.ar_cache_table)
+          else # insert
+            connection.transaction_manager.add_transaction_table(model.table_name)
+          end
         end
       end
     end
