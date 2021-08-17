@@ -2,6 +2,8 @@
 
 require 'active_support/testing/method_call_assertions'
 require 'active_support/testing/stream'
+require_relative './test_helper'
+require_relative './cache_record'
 
 # This class is based on ActiveRecord::TestCase modified.
 module ArCache
@@ -28,19 +30,25 @@ module ArCache
   class TestCase < ActiveSupport::TestCase
     include ActiveSupport::Testing::MethodCallAssertions
     include ActiveSupport::Testing::Stream
+    include ::ActiveRecord::TestFixtures
     include Spec
+    include TestHelper
 
-    # parallelize(workers: :number_of_processors, with: :threads)
-
+    self.fixture_path = File.expand_path('../models', __dir__)
+    self.use_transactional_tests = false
+    self.use_instantiated_fixtures = true
     self.test_order = :random
 
+    fixtures :all
+    parallelize workers: :number_of_processors # Note: Please disable it if use spec to make test cases.
+
     def setup
-      DatabaseCleaner.start
+      super
       ArCache.clear
     end
 
     def teardown
-      DatabaseCleaner.clean
+      super
       SQLCounter.clear_log
     end
 
@@ -116,13 +124,6 @@ module ArCache
       end
     end
 
-    def savepoint
-      ::ActiveRecord::Base.connection.begin_transaction(joinable: false)
-      yield
-    ensure
-      ::ActiveRecord::Base.connection.rollback_transaction
-    end
-
     def current_adapter?(*types)
       types.any? do |type|
         ::ActiveRecord::ConnectionAdapters.const_defined?(type) &&
@@ -133,19 +134,21 @@ module ArCache
     def in_memory_db?
       current_adapter?(:SQLite3Adapter) && ::ActiveRecord::Base.connection_pool.db_config.database == ':memory:'
     end
-
-    def assert_no_cache(type, &block)
-      raise ArgumentError, 'type must be read\write\delete' unless %i[read write delete].include?(type.to_sym)
-
-      assert_not_called(ArCache::Configuration.cache_store, type) do
-        assert_not_called(ArCache::Configuration.cache_store, "#{type}_multi", &block)
-      end
-    end
   end
 
   class PostgreSQLTestCase < TestCase
     def self.run(*args)
       super if current_adapter?(:PostgreSQLAdapter)
+    end
+
+    def self.config
+      {
+        adapter: 'postgresql',
+        database: 'ar_cache',
+        timeout: 5000,
+        # username: ,
+        # password:
+      }
     end
   end
 
@@ -153,11 +156,29 @@ module ArCache
     def self.run(*args)
       super if current_adapter?(:Mysql2Adapter)
     end
+
+    def self.config
+      {
+        adapter: 'mysql2',
+        database: 'ar_cache',
+        timeout: 5000,
+        # username: ,
+        # password:
+      }
+    end
   end
 
   class SQLite3TestCase < TestCase
     def self.run(*args)
       super if current_adapter?(:SQLite3Adapter)
+    end
+
+    def self.config
+      {
+        adapter: 'sqlite3',
+        database: 'db/ar_cache.sqlite3',
+        timeout: 5000
+      }
     end
   end
 

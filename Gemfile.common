@@ -7,8 +7,10 @@ gem 'rake'
 
 gem 'redis'
 gem 'dalli'
+
 gem 'sqlite3'
-gem 'database_cleaner'
+gem 'pg'
+gem 'mysql2'
 
 gem 'rubocop'
 gem 'rubocop-rake'

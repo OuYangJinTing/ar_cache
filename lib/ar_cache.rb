@@ -22,7 +22,7 @@ module ArCache
   @cache_reflection = {}
 
   class << self
-    delegate :configure, :memcached?, :redis?, :cache_store, to: ArCache::Configuration
+    delegate :configure, :memcached?, :redis?, :cache_lock?, :cache_store, to: ArCache::Configuration
     delegate :read, :read_multi, :write, :write_multi, :delete, :delete_multi, :exist?, :clear, to: :cache_store
 
     def skip_cache?
