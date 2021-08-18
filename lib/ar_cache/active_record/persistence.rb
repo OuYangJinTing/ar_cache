@@ -6,15 +6,15 @@ module ArCache
       module ClassMethods
         def _update_record(_, constraints)
           ArCache.skip_expire do
-            delete_ar_cache_key(constraints[@primary_key])
             super
+            delete_ar_cache_key(constraints[@primary_key])
           end
         end
 
         def _delete_record(constraints)
           ArCache.skip_expire do
-            delete_ar_cache_key(constraints[@primary_key])
             super
+            delete_ar_cache_key(constraints[@primary_key])
           end
         end
 

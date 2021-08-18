@@ -12,27 +12,40 @@ module ArCache
       end
 
       def update_all(...)
-        ArCache.skip_expire { delete_ar_cache_primary_keys ? super : 0 }
+        return super if ar_cache_table.disabled?
+
+        ArCache.skip_expire do
+          keys = ar_cache_primary_keys
+          if keys.any?
+            super
+            connection.current_transaction.delete_ar_cache_primary_keys(keys, ar_cache_table)
+          else
+            0
+          end
+        end
       end
 
       def delete_all
-        ArCache.skip_expire { delete_ar_cache_primary_keys ? super : 0 }
+        return super if ar_cache_table.disabled?
+
+        ArCache.skip_expire do
+          keys = ar_cache_primary_keys
+          if keys.any?
+            super
+            connection.current_transaction.delete_ar_cache_primary_keys(keys, ar_cache_table)
+          else
+            0
+          end
+        end
       end
 
-      private def delete_ar_cache_primary_keys
-        return true if klass.ar_cache_table.disabled?
-
+      private def ar_cache_primary_keys
         where_clause = ArCache::WhereClause.new(klass, arel.constraints)
-        keys = if where_clause.cacheable? && where_clause.primary_key_index?
-                 where_clause.primary_cache_keys
-               else
-                 pluck(primary_key).map { |item| klass.ar_cache_table.primary_cache_key(item) }
-               end
-
-        return false if keys.empty?
-
-        @klass.connection.current_transaction.delete_ar_cache_primary_keys(keys, @klass.ar_cache_table)
-        true
+        if where_clause.cacheable? && where_clause.primary_key_index?
+          where_clause.primary_cache_keys
+        else
+          pluck(primary_key).map { |item| klass.ar_cache_table.primary_cache_key(item) }
+        end
       end
 
       private def exec_queries(&block)
