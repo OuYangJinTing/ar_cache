@@ -4,8 +4,8 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module NullTransaction
-        def delete_ar_cache_primary_keys(keys, table)
-          handle_ar_cache_primary_keys(keys) unless table.disabled?
+        def delete_ar_cache_primary_keys(keys)
+          handle_ar_cache_primary_keys(keys)
         end
 
         def update_ar_cache_table(table)
@@ -32,17 +32,15 @@ module ArCache
           @ar_cache_tables = []
         end
 
-        def delete_ar_cache_primary_keys(keys, table)
-          return if table.disabled?
-
-          connection.transaction_manager.add_transaction_table(table.name)
+        def delete_ar_cache_primary_keys(keys)
+          connection.transaction_manager.add_ar_cache_transactions(keys)
           ar_cache_primary_keys.push(*keys)
         end
 
         def update_ar_cache_table(table)
           return if table.disabled?
 
-          connection.transaction_manager.add_transaction_table(table.name)
+          connection.transaction_manager.add_ar_cache_transactions(table.name)
           ar_cache_tables.push(table)
         end
 
@@ -67,21 +65,27 @@ module ArCache
       module TransactionManager
         def initialize(...)
           super
-          @transaction_tables = {}
+          @ar_cache_transactions = {}
         end
 
-        def add_transaction_table(table_name)
-          @transaction_tables[table_name] = true if @stack.any?
+        def add_ar_cache_transactions(keys)
+          return if @stack.empty?
+
+          if keys.is_a?(Array)
+            keys.each { |k| @ar_cache_transactions[k] = true }
+          else
+            @ar_cache_transactions[keys] = true
+          end
         end
 
-        def transaction_table?(table_name)
-          @transaction_tables.key?(table_name)
+        def ar_cache_transactions?(key)
+          @ar_cache_transactions.key?(key)
         end
 
         def within_new_transaction(...)
           super
         ensure
-          @transaction_tables.clear if @stack.zero?
+          @ar_cache_transactions.clear if @stack.empty?
         end
       end
     end

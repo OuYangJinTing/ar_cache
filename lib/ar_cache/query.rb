@@ -52,7 +52,7 @@ module ArCache
       return false if relation.left_outer_joins_values.any?
       return false if relation.offset_value
       return false if relation.eager_loading?
-      return false if relation.connection.transaction_manager.transaction_table?(table.name)
+      return false if relation.connection.transaction_manager.ar_cache_transactions?(table.name)
       return false unless relation.from_clause.empty?
       return false unless where_clause.cacheable?
       return false unless select_values_cacheable?

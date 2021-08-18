@@ -63,14 +63,17 @@ module ArCache
         @cache_hash[table.cache_key(where_values_hash, @index, multi_values_key, v)] = v
       end
 
-      return @cache_hash if primary_key_index?
+      unless primary_key_index?
+        @original_cache_hash = @cache_hash
+        @cache_hash = ArCache.read_multi(*@cache_hash.keys, raw: true)
+        @original_cache_hash.each { |k, v| missed_values << v unless @cache_hash.key?(k) }
+        @cache_hash = @cache_hash.invert
+      end
 
-      @original_cache_hash = @cache_hash
-      @cache_hash = ArCache.read_multi(*@cache_hash.keys, raw: true)
-      @original_cache_hash.each { |k, v| missed_values << v unless @cache_hash.key?(k) }
-      @cache_hash = @cache_hash.invert
-
-      @cache_hash
+      @cache_hash.delete_if do |k, v|
+        next unless klass.connection.transaction_manager.ar_cache_transactions?(k)
+        missed_values << (primary_key_index? ? v : @original_cache_hash[v])
+      end
     end
 
     def primary_cache_keys
@@ -98,7 +101,7 @@ module ArCache
     end
 
     # After update/delete record, ArCache only remove primary cache key.
-    # Therefore, the primary cache key is reliable, but the second cache
+    # Therefore, the primary cache key is reliable, but the other cache
     # key may is wrong.
     def add_invalid_key(key)
       invalid_keys << cache_hash[key] unless primary_key_index?

@@ -19,8 +19,10 @@ module ArCache
         end
 
         private def delete_ar_cache_key(id)
+          return if ar_cache_table.disabled?
+
           key = ar_cache_table.primary_cache_key(id)
-          connection.current_transaction.delete_ar_cache_primary_keys([key], ar_cache_table)
+          connection.current_transaction.delete_ar_cache_primary_keys([key])
         end
       end
 

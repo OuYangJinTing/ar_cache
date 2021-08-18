@@ -18,7 +18,7 @@ module ArCache
           keys = ar_cache_primary_keys
           if keys.any?
             super
-            connection.current_transaction.delete_ar_cache_primary_keys(keys, ar_cache_table)
+            connection.current_transaction.delete_ar_cache_primary_keys(keys)
           else
             0
           end
@@ -32,7 +32,7 @@ module ArCache
           keys = ar_cache_primary_keys
           if keys.any?
             super
-            connection.current_transaction.delete_ar_cache_primary_keys(keys, ar_cache_table)
+            connection.current_transaction.delete_ar_cache_primary_keys(keys)
           else
             0
           end
@@ -44,7 +44,7 @@ module ArCache
         if where_clause.cacheable? && where_clause.primary_key_index?
           where_clause.primary_cache_keys
         else
-          pluck(primary_key).map { |item| klass.ar_cache_table.primary_cache_key(item) }
+          pluck(primary_key).map { |id| klass.ar_cache_table.primary_cache_key(id) }
         end
       end
 

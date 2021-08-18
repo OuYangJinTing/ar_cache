@@ -21,15 +21,16 @@ module ArCache
         end
 
         def insert(arel, ...)
-          super.tap do
+          super.tap do |id|
             if arel.is_a?(String)
               sql = arel.downcase
-
               ArCache::Table.all.each do |table|
-                transaction_manager.add_transaction_table(table.name) if sql.include?(table.name)
+                transaction_manager.add_ar_cache_transactions(table.primary_cache_key(id)) if sql.include?(table.name)
               end
             else
-              transaction_manager.add_transaction_table(arel.ast.relation.name)
+              klass = arel.ast.relation.instance_variable_get(:@klass)
+              primary_cache_key = klass.ar_cache_table.primary_cache_key(id)
+              transaction_manager.add_ar_cache_transactions(primary_cache_key)
             end
           end
         end
@@ -71,7 +72,6 @@ module ArCache
 
         private def update_ar_cache_by_sql(sql)
           sql = sql.downcase
-
           ArCache::Table.all.each do |table|
             current_transaction.update_ar_cache_table(table) if sql.include?(table.name)
           end
