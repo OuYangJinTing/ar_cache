@@ -56,7 +56,7 @@ module ArCache
                             when 'ActiveRecord::ConnectionAdapters::SQLite3Adapter'
                               raise "SQLite3 don't support lock statement, please use cache lock."
                             else
-                              raise "Arcache can't identify database, please defined lock statement or use cache lock"
+                              raise "ArCache can't identify database, please defined lock statement or use cache lock"
                             end
       end
     end

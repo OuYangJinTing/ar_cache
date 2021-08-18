@@ -40,7 +40,7 @@ module ArCache
       @identity_cache_key = "ar:cache:#{@name}"
       @short_sha1 = Digest::SHA1.hexdigest("#{@disabled}:#{columns.to_json}").first(7)
 
-      # For avoid to skip Arcache read cache, must delete cache when disable Arcache.
+      # For avoid to skip ArCache read cache, must delete cache when disable ArCache.
       # For keep table's schema is consistent, must delete cache after modified the table.
       ArCache.delete(@identity_cache_key) if disabled? || !cache_key_prefix.start_with?("#{@identity_cache_key}:#{@short_sha1}") # rubocop:disable Layout/LineLength
     end
