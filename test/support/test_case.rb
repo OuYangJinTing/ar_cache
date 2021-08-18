@@ -35,12 +35,10 @@ module ArCache
     self.test_order = :random
 
     def setup
-      DatabaseCleaner.start
       ArCache.clear
     end
 
     def teardown
-      DatabaseCleaner.clean
       SQLCounter.clear_log
     end
 

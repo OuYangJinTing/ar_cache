@@ -5,7 +5,6 @@ $LOAD_PATH.unshift File.expand_path('../lib', __dir__)
 require 'pry' if ENV['DEBUG']
 require 'ar_cache'
 require 'sqlite3'
-require 'database_cleaner'
 require 'minitest/autorun'
 require 'support/test_case'
 
