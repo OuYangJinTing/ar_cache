@@ -17,7 +17,7 @@ require 'ar_cache/active_record'
 require_relative './generators/ar_cache/install_generator' if defined?(Rails)
 
 module ArCache
-  PLACEHOLDER = ''
+  LOCK = ''
 
   @cache_reflection = {}
 
@@ -72,8 +72,8 @@ module ArCache
       memcached? || redis? ? Oj.load(attributes) : attributes
     end
 
-    def lock_key(key)
-      ArCache.write(key, PLACEHOLDER, raw: true, expires_in: 1.hour)
+    def lock(key)
+      ArCache.write(key, LOCK, raw: true, expires_in: 1.hour)
     end
   end
 end

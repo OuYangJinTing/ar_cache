@@ -91,12 +91,16 @@ module ArCache
       end
     end
 
-    def add_blank_primary_cache_key(key)
+    # ArCache should remove lock key before execute query statements,
+    # otherwise ArCahe will not fill missing cache value.
+    def add_lock_key(key)
       invalid_keys << key
     end
 
-    def add_invalid_second_cache_key(key)
-      # invalid_keys << key # The primary key index is reliable.
+    # After update/delete record, ArCache only remove primary cache key.
+    # Therefore, the primary cache key is reliable, but the second cache
+    # key may is wrong.
+    def add_invalid_key(key)
       invalid_keys << cache_hash[key] unless primary_key_index?
     end
 

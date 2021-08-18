@@ -14,7 +14,7 @@ module ArCache
 
         def handle_ar_cache_primary_keys(keys)
           if ArCache::Configuration.cache_lock?
-            keys.each { |k| ArCache.lock_key(k) }
+            keys.each { |k| ArCache.lock(k) }
           else
             ArCache.delete_multi(keys)
           end

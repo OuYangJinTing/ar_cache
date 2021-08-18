@@ -20,8 +20,8 @@ module ArCache
         bool = ArCache.write(key, stringify_attributes, unless_exist: cache_lock?, raw: true, expires_in: expires_in)
         if cache_lock? && !bool
           value = ArCache.read(key, raw: true)
-          next if value == ArCache::PLACEHOLDER
-          next ArCache.lock_key(key) if value != stringify_attributes
+          next if value == ArCache::LOCK
+          next ArCache.lock(key) if value != stringify_attributes
         end
 
         unique_indexes.each_with_index do |index, i|
@@ -41,9 +41,9 @@ module ArCache
         case v
         when nil
           where_clause.add_missed_values(k)
-        when ArCache::PLACEHOLDER
+        when ArCache::LOCK
           where_clause.add_missed_values(k)
-          where_clause.add_blank_primary_cache_key(k)
+          where_clause.add_lock_key(k)
           entries_hash.delete(k)
         else
           entries_hash[k] = load_attributes(v)
@@ -57,7 +57,7 @@ module ArCache
 
         if wrong_key
           where_clause.add_missed_values(k)
-          where_clause.add_invalid_second_cache_key(k) if column_indexes.include?(wrong_key)
+          where_clause.add_invalid_key(k) if column_indexes.include?(wrong_key)
         else
           entry = entry.slice(*select_values) if select_values
           records << instantiate(where_clause.klass, entry, &block)

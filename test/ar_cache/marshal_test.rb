@@ -90,17 +90,17 @@ module ArCache
         end
 
         describe 'should call #add_missed_values' do
-          it 'should call #add_invalid_second_cache_key when wrony column is index column' do
+          it 'should call #add_invalid_key when wrony column is index column' do
             assert_called(where_clause3, :add_missed_values) do
-              assert_called(where_clause3, :add_invalid_second_cache_key) do
+              assert_called(where_clause3, :add_invalid_key) do
                 assert user_table.read(where_clause3).one?
               end
             end
           end
 
-          it 'should not call #add_invalid_second_cache_key when wrony column is not index column' do
+          it 'should not call #add_invalid_key when wrony column is not index column' do
             assert_called(where_clause4, :add_missed_values) do
-              assert_not_called(where_clause4, :add_invalid_second_cache_key) do
+              assert_not_called(where_clause4, :add_invalid_key) do
                 assert_empty user_table.read(where_clause4)
               end
             end
