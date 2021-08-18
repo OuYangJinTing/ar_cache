@@ -33,22 +33,24 @@ module ArCache
         end
 
         def delete_ar_cache_primary_keys(keys, table)
-          connection.transaction_manager.add_transaction_table(table.name)
           return if table.disabled?
 
-          super if read_uncommitted?
+          connection.transaction_manager.add_transaction_table(table.name)
           ar_cache_primary_keys.push(*keys)
         end
 
         def update_ar_cache_table(table)
-          connection.transaction_manager.add_transaction_table(table.name)
           return if table.disabled?
 
-          super if read_uncommitted?
+          connection.transaction_manager.add_transaction_table(table.name)
           ar_cache_tables.push(table)
         end
 
-        # FIXME: The cache is removed after transaction commited, so dirty read may occur.
+        # FIXME: The cache is removed after transaction commited, so may read dirty record.
+        #
+        # SOLUTION: The lock cache key before operation, and then unlock it at the right time.
+        # This need an extra cache operation, and it is expensive when delete a large number
+        # of records. Don't fix for now.
         def commit
           super
         ensure
@@ -60,10 +62,6 @@ module ArCache
             connection.current_transaction.ar_cache_primary_keys.push(*ar_cache_primary_keys)
           end
         end
-
-        def read_uncommitted?
-          isolation_level == :read_uncommitted || !connection.transaction_manager.fully_joinable?
-        end
       end
 
       module TransactionManager
@@ -73,21 +71,17 @@ module ArCache
         end
 
         def add_transaction_table(table_name)
-          @transaction_tables[table_name] = true if fully_joinable? && @stack.any?
+          @transaction_tables[table_name] = true if @stack.any?
         end
 
         def transaction_table?(table_name)
           @transaction_tables.key?(table_name)
         end
 
-        def fully_joinable?
-          @stack.all?(&:joinable?)
-        end
-
         def within_new_transaction(...)
           super
         ensure
-          @transaction_tables.clear if @stack.count(&:joinable?).zero?
+          @transaction_tables.clear if @stack.zero?
         end
       end
     end
