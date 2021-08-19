@@ -53,11 +53,11 @@ module ArCache
       records = []
 
       entries_hash.each do |k, entry|
-        wrong_key = detect_wrong_column(entry, where_clause.to_h)
+        mismatch_column = detect_mismatch_column(entry, where_clause.to_h)
 
-        if wrong_key
+        if mismatch_column
           where_clause.add_missed_values(k)
-          where_clause.add_invalid_key(k) if column_indexes.include?(wrong_key)
+          where_clause.add_invalid_key(k) if column_indexes.include?(mismatch_column)
         else
           entry = entry.slice(*select_values) if select_values
           records << instantiate(where_clause.klass, entry, &block)
@@ -68,7 +68,7 @@ module ArCache
       records
     end
 
-    private def detect_wrong_column(entry, where_values_hash)
+    private def detect_mismatch_column(entry, where_values_hash)
       where_values_hash.detect do |k, v|
         value = entry[k]
 

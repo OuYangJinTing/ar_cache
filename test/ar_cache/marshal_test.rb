@@ -109,11 +109,11 @@ module ArCache
       end
     end
 
-    it '#detect_wrong_column' do
-      assert_not User.ar_cache_table.send(:detect_wrong_column, { 'id' => 0 }, { 'id' => 0 })
-      assert_not User.ar_cache_table.send(:detect_wrong_column, { 'id' => 0 }, { 'id' => [0] })
-      assert_equal 'id', User.ar_cache_table.send(:detect_wrong_column, { 'id' => 0 }, { 'id' => 1 })
-      assert_equal 'id', User.ar_cache_table.send(:detect_wrong_column, { 'id' => 0 }, { 'id' => [1] })
+    it '#detect_mismatch_column' do
+      assert_not User.ar_cache_table.send(:detect_mismatch_column, { 'id' => 0 }, { 'id' => 0 })
+      assert_not User.ar_cache_table.send(:detect_mismatch_column, { 'id' => 0 }, { 'id' => [0] })
+      assert_equal 'id', User.ar_cache_table.send(:detect_mismatch_column, { 'id' => 0 }, { 'id' => 1 })
+      assert_equal 'id', User.ar_cache_table.send(:detect_mismatch_column, { 'id' => 0 }, { 'id' => [1] })
     end
 
     it '#instantiate' do
