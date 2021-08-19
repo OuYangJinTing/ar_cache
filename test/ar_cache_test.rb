@@ -43,9 +43,9 @@ describe ArCache do
     reflection = User.reflections[:account]
     ArCache.instance_variable_get(:@cache_reflection).delete(reflection)
 
-    assert_not Thread.current[:ar_cache_reflection]
-    ArCache.cache_reflection?(reflection) { assert Thread.current[:ar_cache_reflection] }
-    assert_not Thread.current[:ar_cache_reflection]
+    assert_not Thread.current[:ar_cache_allow_blank_index]
+    ArCache.cache_reflection?(reflection) { assert Thread.current[:ar_cache_allow_blank_index] }
+    assert_not Thread.current[:ar_cache_allow_blank_index]
 
     assert ArCache.instance_variable_get(:@cache_reflection).key?(reflection)
     ArCache.cache_reflection?(reflection) { raise 'ArCache should cache relation' }

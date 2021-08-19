@@ -55,12 +55,26 @@ module ArCache
       end
     end
 
+    def allow_blank_index?
+      Thread.current[:ar_cache_allow_blank_index]
+    end
+
+    def allow_blank_index
+      return yield if allow_blank_index?
+
+      begin
+        Thread.current[:ar_cache_allow_blank_index] = true
+        yield
+      ensure
+        Thread.current[:ar_cache_allow_blank_index] = false
+      end
+    end
+
     def cache_reflection?(reflection)
       @cache_reflection.fetch(reflection) do
-        Thread.current[:ar_cache_reflection] = true
-        @cache_reflection[reflection] = yield
-      ensure
-        Thread.current[:ar_cache_reflection] = false
+        ArCache.allow_blank_index do
+          yield
+        end
       end
     end
 
