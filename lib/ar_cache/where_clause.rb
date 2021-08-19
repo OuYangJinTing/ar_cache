@@ -46,14 +46,17 @@ module ArCache
     end
 
     def single?
+      cacheable?
       @multi_values_key.nil?
     end
 
     def primary_key_index?
+      cacheable?
       (@multi_values_key || @index.first) == table.primary_key
     end
 
     def cache_hash
+      cacheable?
       return @cache_hash if defined?(@cache_hash)
 
       @cache_hash = {}
@@ -112,7 +115,7 @@ module ArCache
     end
 
     # This module is based on ActiveRecord::Relation::WhereClause modified
-    module Raw
+    module RawWhereClause
       def where_values_hash
         @where_values_hash ||= equalities(predicates).each_with_object({}) do |node, hash|
           # Don't support Arel::Nodes::NamedFunction.
@@ -161,6 +164,6 @@ module ArCache
         value.is_a?(Date) ? value.to_s : value
       end
     end
-    include Raw
+    include RawWhereClause
   end
 end
