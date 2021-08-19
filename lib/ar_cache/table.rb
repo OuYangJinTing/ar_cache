@@ -26,22 +26,25 @@ module ArCache
 
     def initialize(table_name)
       @name = table_name
-      @primary_key = ::ActiveRecord::Base.connection.primary_key(@name)
+
+      primary_keys = ::ActiveRecord::Base.connection.schema_cache.primary_keys(@name)
+      @primary_key = primary_keys.first if primary_keys.one? # ArCache does not support composite primary key.
 
       options = ArCache::Configuration.get_table_options(@name)
-      @disabled = @primary_key.nil? ? true : options[:disabled] # ArCache can't work if primary key does not exist.
+
+      @disabled = @primary_key.nil? ? true : options[:disabled] # ArCache depend on primary key.
       @select_disabled = options[:select_disabled]
 
-      columns = ::ActiveRecord::Base.connection.columns(@name)
+      columns = ::ActiveRecord::Base.connection.schema_cache.columns(@name)
       @unique_indexes = normalize_unique_indexes(options[:unique_indexes], columns).freeze
       @column_indexes = @unique_indexes.flatten.uniq.freeze
       @column_names = columns.map(&:name).freeze
 
-      @identity_cache_key = "ar:cache:#{@name}"
+      @identity_cache_key = "ArCache:#{@name}"
       @short_sha1 = Digest::SHA1.hexdigest("#{@disabled}:#{columns.to_json}").first(7)
 
       # For avoid to skip ArCache read cache, must delete cache when disable ArCache.
-      # For keep table's schema is consistent, must delete cache after modified the table.
+      # For keep cache is fresh, must delete cache after modified the table.
       ArCache.delete(@identity_cache_key) if disabled? || !cache_key_prefix.start_with?("#{@identity_cache_key}:#{@short_sha1}") # rubocop:disable Layout/LineLength
     end
 
@@ -87,7 +90,7 @@ module ArCache
     end
 
     private def query_unique_indexes(columns)
-      ::ActiveRecord::Base.connection.indexes(name).filter_map do |index|
+      ::ActiveRecord::Base.connection.schema_cache.indexes(name).filter_map do |index|
         next unless index.unique
         next unless index.columns.is_a?(Array)
 
@@ -103,7 +106,7 @@ module ArCache
       indexes.each do |attrs|
         attrs.each do |attr|
           column = columns.find { |c| c.name == attr }
-          raise ArgumentError, "The #{name} table not found #{attr} column" if column.nil?
+          raise ArgumentError, "The #{name} table not found #{attr} column, may set the wrong index" if column.nil?
         end
       end
     end
