@@ -3,7 +3,7 @@
 module ArCache
   class Configuration
     class << self
-      attr_writer :cache_lock, :lock_statement
+      attr_writer :cache_lock
       attr_reader :cache_store, :tables_options
       attr_accessor :disabled, :select_disabled, :expires_in
 
@@ -54,9 +54,9 @@ module ArCache
                             when 'ActiveRecord::ConnectionAdapters::Mysql2Adapter'
                               'LOCK IN SHARE MODE'
                             when 'ActiveRecord::ConnectionAdapters::SQLite3Adapter'
-                              raise "SQLite3 don't support lock statement, please use cache lock."
+                              raise 'SQLite3 do not support lock statement, please use cache lock.'
                             else
-                              raise "ArCache can't identify database, please defined lock statement or use cache lock"
+                              raise 'ArCache can not identify database, please use cache lock.'
                             end
       end
     end

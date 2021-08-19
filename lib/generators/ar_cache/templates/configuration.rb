@@ -5,12 +5,10 @@ ArCache.configure do |config|
   # The cache tool. It must be an instance of ActiveSupport::Cache::Store.
   config.cache_store = defined?(Rails) ? Rails.cache : ActiveSupport::Cache::MemoryStore.new
 
-  # NOTE: Please use cache lock if it casue database happened dead lock.
-  # ArCache default use database share lock('FOR SHARE' or 'LOCK IN SHARE MODE') to ensure that the cache is correct.
-  # You can customize the lock statement, if your database don't support lock (eg: SQLite3), please use cache lock.
-  # config.lock_statement = 'custom lock statement'
-
-  # WARNING: If the cache store is not Redis nor Memcached, the cache lock may be unreliable.
+  # NOTE: ArCache default use database share lock('FOR SHARE' or 'LOCK IN SHARE MODE') to ensure that
+  # the cache is correct. If your database don't support lock (eg: SQLite3), please use cache lock.
+  #
+  # WARNING: If the cache store is not Redis and Memcached and Memory, the cache lock may be unreliable.
   config.cache_lock = false # Boolean
 
   # The cache key valid time.
