@@ -26,12 +26,10 @@ module ArCache
 
     def initialize(table_name)
       @name = table_name
+      options = ArCache::Configuration.get_table_options(@name)
 
       primary_keys = ::ActiveRecord::Base.connection.primary_keys(@name)
       @primary_key = primary_keys.first if primary_keys.one? # ArCache does not support composite primary key.
-
-      options = ArCache::Configuration.get_table_options(@name)
-
       @disabled = @primary_key.nil? ? true : options[:disabled] # ArCache depend on primary key.
       @select_disabled = options[:select_disabled]
 
