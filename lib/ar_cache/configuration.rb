@@ -3,12 +3,15 @@
 module ArCache
   class Configuration
     class << self
-      attr_writer :cache_lock
       attr_reader :cache_store, :tables_options
-      attr_accessor :disabled, :select_disabled, :expires_in
+      attr_accessor :disabled, :select_disabled, :expires_in, :cache_lock, :supports_returning
 
       def configure
         block_given? ? yield(self) : self
+      end
+
+      def supports_returning?
+        @supports_returning
       end
 
       def cache_lock?

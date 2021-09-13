@@ -34,3 +34,4 @@ require 'models/animal'
 require 'models/image'
 require 'models/plan'
 require 'models/empty'
+binding.pry

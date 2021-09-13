@@ -46,17 +46,20 @@ module ArCache
     end
 
     def single?
-      cacheable?
+      raise 'Non-cacheable' unless cacheable?
+
       @multi_values_key.nil?
     end
 
     def primary_key_index?
-      cacheable?
+      raise 'Non-cacheable' unless cacheable?
+
       (@multi_values_key || @index.first) == table.primary_key
     end
 
     def cache_hash
-      cacheable?
+      raise 'Non-cacheable' unless cacheable?
+
       return @cache_hash if defined?(@cache_hash)
 
       @cache_hash = {}

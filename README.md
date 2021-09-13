@@ -55,27 +55,27 @@ rake db:migrate
 
 Skip cache:
 
-- `ArCache#skip_cache`, eg:
+- `ArCache#skip_cache`, e.g.
 
 ```ruby
 # All queries in the block will not use the cache.
 ArCache.skip_cache { User.find(1) }
 ```
 
-- `ActiveRecord::Persistence#reload`, eg:
+- `ActiveRecord::Persistence#reload`, e.g.
 
 ```ruby
 User.find(1).reload
 ```
 
-- `ActiveRecord::Relation#reload`, eg:
+- `ActiveRecord::Relation#reload`, e.g.
 
 ```ruby
 # When reload is called after the associated target has been loaded, the cache will be skipped.
 User.where(id: 1).load.reload
 ```
 
-- `ActiveRecord::Associations::Association#reload`, eg:
+- `ActiveRecord::Associations::Association#reload`, e.g.
 
 ```ruby
 # When reload is called after the associated target has been loaded, the cache will be skipped.
@@ -84,7 +84,7 @@ user.association(:account).load_target.reload
 
 Delete cache:
 
-- `ArCache::Table`, eg:
+- `ArCache::Table`, e.g.
 
 ```ruby
 User.ar_cache_table.delete(id...)

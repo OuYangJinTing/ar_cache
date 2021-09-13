@@ -12,10 +12,10 @@ module ArCache
           klass.ar_cache_table.write(result.to_a)
 
           if select_values
-            result.to_a.each { |r| r.slice!(*select_values) }
+            result.each { |r| r.slice!(*select_values) }
             result.set_instance_variable(:@columns, select_values)
           elsif klass.ignored_columns.any?
-            result.to_a.each { |r| r.except!(*klass.ignored_columns) }
+            result.each { |r| r.except!(*klass.ignored_columns) }
             result.set_instance_variable(:@columns, result.columns - klass.ignored_columns)
           end
 
