@@ -11,6 +11,7 @@ module ArCache
 
     def self.new(table_name)
       @lock.synchronize do
+        table_name.downcase!
         table = @all.find { |t| t.name == table_name }
 
         unless table
@@ -20,6 +21,10 @@ module ArCache
 
         table
       end
+    end
+
+    def self.find(table_name)
+      @all.find { |t| t.name == table_name.downcase }
     end
 
     attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :identity_cache_key, :short_sha1

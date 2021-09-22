@@ -82,6 +82,12 @@ module ArCache
       end
     end
 
+    def primary_key_values
+      raise 'Does not detect primary key index' unless primary_key_index?
+
+      @primary_key_values ||= Array(where_values_hash[table.primary_key])
+    end
+
     def primary_cache_keys
       raise 'Does not detect primary key index' unless primary_key_index?
 

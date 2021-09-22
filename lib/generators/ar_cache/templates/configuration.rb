@@ -2,13 +2,6 @@
 
 # For more information, please see: https://github.com/OuYangJinTing/ar_cache/README.md
 ArCache.configure do |config|
-  # NOTE: Please set to true if your database supports returning clause statements.
-  # When using the skip callback method update or delete records, ArCache will use this
-  # feature to remove the corresponding cache only. Otherwise ArCache will update the
-  # cache key prefix of the corresponding table, which will cause all caches of corresponding
-  # table to be invalid.
-  config.supports_returning = false
-
   # The cache tool. It must be an instance of ActiveSupport::Cache::Store.
   config.cache_store = defined?(Rails) ? Rails.cache : ActiveSupport::Cache::MemoryStore.new
 
@@ -17,6 +10,8 @@ ArCache.configure do |config|
   #
   # WARNING: If the cache store is not Redis and Memcached and Memory, the cache lock may be unreliable.
   config.cache_lock = false # Boolean
+
+  config.handle_cache_whitout_id = 'expire_all' # %w[expire_all returning_clause query_id]
 
   # The cache key valid time.
   config.expires_in = 1.week # Integer

@@ -3,15 +3,11 @@
 module ArCache
   class Configuration
     class << self
-      attr_reader :cache_store, :tables_options
-      attr_accessor :disabled, :select_disabled, :expires_in, :cache_lock, :supports_returning
+      attr_reader :cache_store, :tables_options, :handle_cache_whitout_id
+      attr_accessor :disabled, :select_disabled, :expires_in, :cache_lock
 
       def configure
         block_given? ? yield(self) : self
-      end
-
-      def supports_returning?
-        @supports_returning
       end
 
       def cache_lock?
@@ -36,6 +32,14 @@ module ArCache
         end
 
         @cache_store = cache_store
+      end
+
+      def handle_cache_whitout_id=(mode)
+        if %w[expire_all returning_clause query_id].exclude?(mode)
+          raise ArgumentError, 'The handle_cache_whitout_id must be :expire_all, :returning_clause or :query_id'
+        else
+          @handle_cache_whitout_id = ActiveSupport::StringInquirer.new(mode)
+        end
       end
 
       def tables_options=(options)
