@@ -6,15 +6,13 @@ module ArCache
       module ClassMethods
         def _update_record(_, constraints)
           ArCache.skip_expire do
-            super
-            delete_ar_cache_key(constraints[@primary_key])
+            super.tap { |num| delete_ar_cache_key(constraints[@primary_key]) unless num.zero? }
           end
         end
 
         def _delete_record(constraints)
           ArCache.skip_expire do
-            super
-            delete_ar_cache_key(constraints[@primary_key])
+            super.tap { |num| delete_ar_cache_key(constraints[@primary_key]) unless num.zero? }
           end
         end
 
