@@ -64,7 +64,7 @@ module ArCache
     def update_cache
       return '' if disabled?
 
-      key = "#{identity_cache_key}:#{short_sha1}:#{Time.now.to_f}"
+      key = "#{identity_cache_key}:#{short_sha1}:#{Process.clock_gettime(Process::CLOCK_REALTIME, :millisecond)}"
       ArCache.write(identity_cache_key, key, raw: true, expires_in: 20.years)
       key
     end

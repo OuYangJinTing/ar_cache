@@ -19,7 +19,7 @@ require_relative './generators/ar_cache/install_generator' if defined?(Rails)
 module ArCache
   LOCK = ''
 
-  @cache_reflection = {}
+  @cache_reflections = {}
 
   class << self
     delegate :configure, :cache_lock?, :supports_returning?, :memcached?, :redis?, :cache_store, to: ArCache::Configuration
@@ -55,26 +55,24 @@ module ArCache
       end
     end
 
-    def allow_blank_index?
-      Thread.current[:ar_cache_allow_blank_index]
+    def allow_blank?
+      Thread.current[:ar_cache_allow_blank]
     end
 
-    def allow_blank_index
-      return yield if allow_blank_index?
+    def allow_blank
+      return yield if allow_blank?
 
       begin
-        Thread.current[:ar_cache_allow_blank_index] = true
+        Thread.current[:ar_cache_allow_blank] = true
         yield
       ensure
-        Thread.current[:ar_cache_allow_blank_index] = false
+        Thread.current[:ar_cache_allow_blank] = false
       end
     end
 
     def cache_reflection?(reflection)
-      @cache_reflection.fetch(reflection) do
-        ArCache.allow_blank_index do
-          yield
-        end
+      @cache_reflections.fetch(reflection) do
+        @cache_reflections[reflection] = allow_blank { yield }
       end
     end
 
