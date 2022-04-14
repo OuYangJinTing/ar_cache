@@ -4,6 +4,10 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module DatabaseStatements
+        INSERT_REGEXP = /insert\s+into\s("[A-Za-z0-9_."\[\]\s]+"|[A-Za-z0-9_."\[\]]+)\s*/im.freeze
+        DELETE_REGEXP = /delete\s+from\s("[A-Za-z0-9_."\[\]\s]+"|[A-Za-z0-9_."\[\]]+)\s*/im.freeze
+        UPDATE_REGEXP = /update\s("[A-Za-z0-9_."\[\]\s]+"|[A-Za-z0-9_."\[\]]+)\s*/im.freeze
+
         def select_all(arel, ...)
           result = super
           klass, select_values = arel.try(:klass_and_select_values)
@@ -24,66 +28,67 @@ module ArCache
 
         def insert(arel, ...)
           super.tap do |id|
-            if arel.is_a?(String)
-              sql = arel.downcase
-              ArCache::Table.all.each do |table|
-                transaction_manager.add_ar_cache_transactions(table.primary_cache_key(id)) if sql.include?(table.name)
-              end
-            else
-              klass = arel.ast.relation.instance_variable_get(:@klass)
-              primary_cache_key = klass.ar_cache_table.primary_cache_key(id)
-              transaction_manager.add_ar_cache_transactions(primary_cache_key)
-            end
+            table_name = arel.is_a?(String) ? arel.match(INSERT_REGEXP)[1] : arel.ast.relation.name
+            ar_cache_table = ::ArCache::Table[table_name]
+            cache_key = ar_cache_table.primary_cache_key(id)
+            transaction_manager.add_ar_cache_transactions(cache_key)
           end
         end
         alias create insert
 
-        def update(arel, ...)
-          super.tap { |num| update_ar_cache(arel) unless num.zero? }
+        def update(arel, name = nil, binds = [])
+          if arel.is_a?(String)
+            ar_cache_table = ::ArCache::Table[arel.match(UPDATE_REGEXP)[1]]
+            super.tap { current_transaction.update_ar_cache_table(ar_cache_table) }
+          elsif arel.ar_cache_table.disabled?
+            super
+          elsif arel.recognizable_ar_cache?
+            super.tap { arel.delete_ar_cache_keys(self) }
+          else
+            if ArCache.enabled_returning_clause?
+              update_with_ar_cache(arel, name, binds)
+            else
+              super.tap { current_transaction.update_ar_cache_table(arel.ar_cache_table) }
+            end
+          end
         end
 
-        def delete(arel, ...)
-          super.tap { |num| update_ar_cache(arel) unless num.zero? }
+        def delete(arel, name = nil, binds = [])
+          if arel.is_a?(String)
+            ar_cache_table = ::ArCache::Table[arel.match(DELETE_REGEXP)[1]]
+            super.tap { current_transaction.update_ar_cache_table(ar_cache_table) }
+          elsif arel.ar_cache_table.disabled?
+            super
+          elsif arel.recognizable_ar_cache?
+            super.tap { arel.delete_ar_cache_keys(self) }
+          else
+            if ArCache.enabled_returning_clause?
+              delete_with_ar_cache(arel, name, binds)
+            else
+              super.tap { current_transaction.update_ar_cache_table(arel.ar_cache_table) }
+            end
+          end
         end
 
         def truncate(table_name, ...)
-          super.tap { update_ar_cache_by_table(table_name) }
+          super.tap { current_transaction.update_ar_cache_table(::ArCache::Table[table_name]) }
         end
 
         def truncate_tables(*table_names)
           super.tap do
-            table_names.each { |table_name| update_ar_cache_by_table(table_name) }
+            table_names.each { |table_name| current_transaction.update_ar_cache_table(::ArCache::Table[table_name]) }
           end
         end
 
-        private def update_ar_cache(arel_or_sql_string)
-          if arel_or_sql_string.is_a?(String)
-            update_ar_cache_by_sql(arel_or_sql_string)
-          else # is Arel::TreeManager
-            update_ar_cache_by_arel(arel_or_sql_string)
-          end
+        private def delete_with_ar_cache(arel, name = nil, binds = [])
+          sql, binds = to_sql_and_binds(arel, binds)
+          sql = "#{sql} RETURNING #{quote_column_name(arel.ar_cache_table.primary_key)}"
+          result = exec_query(sql, name, binds)
+          cache_keys = result.rows.map { |row| arel.ar_cache_table.primary_cache_key(row.first) }
+          current_transaction.delete_ar_cache_keys(cache_keys)
+          result.length
         end
-
-        private def update_ar_cache_by_arel(arel)
-          return if ArCache.skip_expire?
-
-          arel_table = arel.ast.relation.is_a?(Arel::Table) ? arel.ast.relation : arel.ast.relation.left
-          klass = arel_table.instance_variable_get(:@klass)
-          current_transaction.update_ar_cache_table(klass.ar_cache_table)
-        end
-
-        private def update_ar_cache_by_sql(sql)
-          sql = sql.downcase
-          ArCache::Table.all.each do |table|
-            current_transaction.update_ar_cache_table(table) if sql.include?(table.name)
-          end
-        end
-
-        private def update_ar_cache_by_table(table_name)
-          ArCache::Table.all.each do |table|
-            break current_transaction.update_ar_cache_table(table) if table_name == table.name
-          end
-        end
+        alias :update_with_ar_cache :delete_with_ar_cache
       end
     end
   end

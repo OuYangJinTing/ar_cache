@@ -2,28 +2,29 @@
 
 module ArCache
   class Query
-    delegate :lock_statement, :cache_lock?, to: ArCache::Configuration
+    delegate :klass, to: :relation
+    delegate :ar_cache_table, to: :klass
+    delegate :read, :primary_key, :column_names, :disabled?, :select?, to: :ar_cache_table
 
     attr_reader :relation, :table, :where_clause
 
     def initialize(relation)
       @relation = relation
-      @table = @relation.klass.ar_cache_table
-      @where_clause = ArCache::WhereClause.new(@relation.klass, @relation.where_clause.send(:predicates))
+      @where_clause = ArCache::WhereClause.new(klass, @relation.where_clause.send(:predicates))
     end
 
-    def exec_queries(&block) # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
+    def exec_queries(&block)
       return [] if relation.where_clause.contradiction?
       return ArCache.skip_cache { relation.send(:exec_queries, &block) } unless exec_queries_cacheable?
 
-      records = table.read(where_clause, @select_values, &block)
+      records = read(where_clause, @select_values, &block)
 
       if where_clause.missed_hash.any?
         missed_relation = relation.rewhere(where_clause.missed_hash).reselect('*')
-        missed_relation = missed_relation.lock(lock_statement) unless cache_lock?
+        missed_relation = missed_relation.lock(ArCache.lock_statement) unless ArCache.cache_lock?
         missed_relation.arel.singleton_class.attr_accessor(:klass_and_select_values)
-        missed_relation.arel.klass_and_select_values = [relation.klass, @select_values]
-        if cache_lock?
+        missed_relation.arel.klass_and_select_values = [klass, @select_values]
+        if ArCache.cache_lock?
           records += missed_relation.find_by_sql(missed_relation.arel, &block)
         else
           missed_relation.connection.transaction do
@@ -42,8 +43,8 @@ module ArCache
       records
     end
 
-    def exec_queries_cacheable? # rubocop:disable Metrics/PerceivedComplexity, Metrics/CyclomaticComplexity
-      return false if table.disabled?
+    def exec_queries_cacheable?(strict: true)
+      return false if disabled?
       return false if relation.skip_query_cache_value
       return false if relation.lock_value
       return false if relation.distinct_value
@@ -52,9 +53,9 @@ module ArCache
       return false if relation.left_outer_joins_values.any?
       return false if relation.offset_value
       return false if relation.eager_loading?
-      return false if relation.connection.transaction_manager.ar_cache_transactions?(table.name)
+      return false if relation.connection.transaction_manager.ar_cache_transactions?(ar_cache_table.name)
       return false unless relation.from_clause.empty?
-      return false unless where_clause.cacheable?
+      return false unless where_clause.cacheable?(strict: strict)
       return false unless select_values_cacheable?
       return false unless order_values_cacheable?
       return false unless limit_value_cacheable?
@@ -64,13 +65,13 @@ module ArCache
 
     private def select_values_cacheable?
       return true if relation.select_values.empty?
-      return false if table.select_disabled?
+      return false unless select?
 
       @select_values = relation.select_values.map(&:to_s)
-      (@select_values - table.column_names).empty?
+      (@select_values - column_names).empty?
     end
 
-    private def order_values_cacheable? # rubocop:disable Metrics/CyclomaticComplexity
+    private def order_values_cacheable?
       return true if where_clause.single?
 
       size = relation.order_values.size
@@ -84,7 +85,7 @@ module ArCache
         @order_desc = first_order_value.descending?
       when String
         @order_name, @order_desc = first_order_value.downcase.split
-        return false unless table.column_names.include?(@order_name)
+        return false unless column_names.include?(@order_name)
         return false unless ['asc', 'desc', nil].include?(@order_desc)
 
         @order_desc = @order_desc == 'desc'
@@ -102,10 +103,12 @@ module ArCache
     private def records_order(records)
       return records if records.size < 2
 
-      method = "#{@order_name || table.primary_key}_for_database"
-      return records.sort! { |a, b| b.send(method) <=> a.send(method) } if @order_desc
-
-      records.sort! { |a, b| a.send(method) <=> b.send(method) }
+      method = "#{@order_name || primary_key}_for_database"
+      if @order_desc
+        records.sort! { |a, b| b.send(method) <=> a.send(method) }
+      else
+        records.sort! { |a, b| a.send(method) <=> b.send(method) }
+      end
     end
   end
 end

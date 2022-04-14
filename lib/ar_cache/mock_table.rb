@@ -3,12 +3,16 @@
 module ArCache
   class MockTable
     class << self
+      def enabled?
+        false
+      end
+
       def disabled?
         true
       end
 
-      def select_disabled?
-        true
+      def select?
+        false
       end
 
       def cache_key_prefix

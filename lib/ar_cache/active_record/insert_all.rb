@@ -4,22 +4,23 @@ module ArCache
   module ActiveRecord
     module InsertAll
       def execute
-        return super if model.ar_cache_table.disabled?
+        ar_cache_table = ::ArCache::Table[model.table_name]
+        return super if ar_cache_table.disabled?
 
-        result = super
-      ensure
-        if result.includes_column?(model.primary_key)
-          primary_cache_keys = result.map { |r| model.ar_cache_table.primary_cache_key(r[model.primary_key]) }
-          if update_duplicates?
-            onnection.current_transaction.delete_ar_cache_primary_keys(primary_cache_keys)
+        super.tap do |result|
+          if result.includes_column?(ar_cache_table.primary_key)
+            cache_keys = result.map { |h| ar_cache_table.primary_cache_key(h[ar_cache_table.primary_key]) }
+            if update_duplicates?
+              connection.current_transaction.delete_ar_cache_keys(cache_keys)
+            else
+              connection.transaction_manager.add_ar_cache_transactions(cache_keys)
+            end
           else
-            connection.transaction_manager.add_ar_cache_transactions(primary_cache_keys)
-          end
-        else
-          if update_duplicates?
-            connection.current_transaction.update_ar_cache_table(model.ar_cache_table)
-          else
-            connection.transaction_manager.add_ar_cache_transactions(model.table_name)
+            if update_duplicates?
+              connection.current_transaction.update_ar_cache_table(ar_cache_table)
+            else
+              connection.transaction_manager.add_ar_cache_transactions(ar_cache_table.name)
+            end
           end
         end
       end

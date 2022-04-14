@@ -4,15 +4,15 @@ module ArCache
   module ActiveRecord
     module ConnectionAdapters
       module NullTransaction
-        def delete_ar_cache_primary_keys(keys)
-          handle_ar_cache_primary_keys(keys)
+        def delete_ar_cache_keys(keys)
+          expire_ar_cache_keys(keys)
         end
 
         def update_ar_cache_table(table)
           table.update_cache
         end
 
-        def handle_ar_cache_primary_keys(keys)
+        private def expire_ar_cache_keys(keys)
           if ArCache::Configuration.cache_lock?
             keys.each { |k| ArCache.lock(k) }
           else
@@ -24,17 +24,17 @@ module ArCache
       module Transaction
         include NullTransaction
 
-        attr_reader :ar_cache_primary_keys, :ar_cache_tables
-
-        def initialize(...)
-          super
-          @ar_cache_primary_keys = []
-          @ar_cache_tables = []
+        def ar_cache_keys
+          @ar_cache_keys ||= []
         end
 
-        def delete_ar_cache_primary_keys(keys)
+        def ar_cache_tables
+          @ar_cache_tables ||= []
+        end
+
+        def delete_ar_cache_keys(keys)
           connection.transaction_manager.add_ar_cache_transactions(keys)
-          ar_cache_primary_keys.push(*keys)
+          ar_cache_keys.push(*keys)
         end
 
         def update_ar_cache_table(table)
@@ -44,20 +44,15 @@ module ArCache
           ar_cache_tables.push(table)
         end
 
-        # FIXME: The cache is removed after transaction commited, so may read dirty record.
-        #
-        # SOLUTION: The lock cache key before operation, and then unlock it at the right time.
-        # This need an extra cache operation, and it is expensive when delete a large number
-        # of records. Don't fix for now.
         def commit
           super
         ensure
           if @run_commit_callbacks
-            handle_ar_cache_primary_keys(ar_cache_primary_keys.uniq) if ar_cache_primary_keys.any?
-            ar_cache_tables.uniq(&:name).each(&:update_cache) if ar_cache_tables.any?
+            expire_ar_cache_keys(ar_cache_keys.uniq) if ar_cache_keys.any?
+            ar_cache_tables.each(&:update_cache) if ar_cache_tables.any?
           else
             connection.current_transaction.ar_cache_tables.push(*ar_cache_tables)
-            connection.current_transaction.ar_cache_primary_keys.push(*ar_cache_primary_keys)
+            connection.current_transaction.ar_cache_keys.push(*ar_cache_keys)
           end
         end
       end

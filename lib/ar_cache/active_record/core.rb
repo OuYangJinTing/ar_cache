@@ -4,9 +4,6 @@ module ArCache
   module ActiveRecord
     module Core
       module ClassMethods
-        # The #find and #find_by use ActiveRecord::StatementCache to execute querying first.
-        # For ArCache, we need force skip ActiveRecord::StatementCache.
-
         def find(...)
           ArCache.skip_cache? || ar_cache_table.disabled? ? super : all.find(...)
         end

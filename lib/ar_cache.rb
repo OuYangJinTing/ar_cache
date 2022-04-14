@@ -5,6 +5,7 @@ require 'active_record'
 require 'oj'
 
 require 'ar_cache/version'
+require 'ar_cache/errors'
 require 'ar_cache/configuration'
 require 'ar_cache/marshal'
 require 'ar_cache/table'
@@ -19,10 +20,10 @@ require_relative './generators/ar_cache/install_generator' if defined?(Rails)
 module ArCache
   LOCK = ''
 
-  @cache_reflection = {}
+  @cache_reflections = {}
 
   class << self
-    delegate :configure, :cache_lock?, :supports_returning?, :memcached?, :redis?, :cache_store, to: ArCache::Configuration
+    delegate :configure, :lock_statement, :cache_store, :table_config, :expires_in, :cache_lock?, :returning?, :memcached?, :redis?, to: ArCache::Configuration
     delegate :read, :read_multi, :write, :write_multi, :delete, :delete_multi, :exist?, :clear, to: :cache_store
 
     def skip_cache?
@@ -40,49 +41,15 @@ module ArCache
       end
     end
 
-    def skip_expire?
-      Thread.current[:ar_cache_skip_expire]
-    end
-
-    def skip_expire
-      return yield if skip_expire?
-
-      begin
-        Thread.current[:ar_cache_skip_expire] = true
-        yield
-      ensure
-        Thread.current[:ar_cache_skip_expire] = false
-      end
-    end
-
-    def allow_blank_index?
-      Thread.current[:ar_cache_allow_blank_index]
-    end
-
-    def allow_blank_index
-      return yield if allow_blank_index?
-
-      begin
-        Thread.current[:ar_cache_allow_blank_index] = true
-        yield
-      ensure
-        Thread.current[:ar_cache_allow_blank_index] = false
-      end
-    end
-
     def cache_reflection?(reflection)
-      @cache_reflection.fetch(reflection) do
-        ArCache.allow_blank_index do
-          yield
-        end
-      end
+      @cache_reflections.fetch(reflection) { @cache_reflections[reflection] = yield }
     end
 
-    def dump_attributes(attributes)
+    def dump(attributes)
       memcached? || redis? ? Oj.dump(attributes) : attributes
     end
 
-    def load_attributes(attributes)
+    def load(attributes)
       memcached? || redis? ? Oj.load(attributes) : attributes
     end
 

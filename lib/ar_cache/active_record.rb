@@ -19,7 +19,6 @@ ActiveSupport.on_load(:active_record, run_once: true) do
   ActiveRecord::ModelSchema::ClassMethods.prepend(ArCache::ActiveRecord::ModelSchema::ClassMethods)
 
   ActiveRecord::Persistence.prepend(ArCache::ActiveRecord::Persistence)
-  ActiveRecord::Persistence::ClassMethods.prepend(ArCache::ActiveRecord::Persistence::ClassMethods)
 
   ActiveRecord::InsertAll.prepend(ArCache::ActiveRecord::InsertAll)
 
@@ -33,7 +32,6 @@ ActiveSupport.on_load(:active_record, run_once: true) do
   ActiveRecord::ConnectionAdapters::RealTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
   ActiveRecord::ConnectionAdapters::SavepointTransaction.prepend(ArCache::ActiveRecord::ConnectionAdapters::Transaction)
   ActiveRecord::ConnectionAdapters::TransactionManager.prepend(ArCache::ActiveRecord::ConnectionAdapters::TransactionManager)
-
   ActiveRecord::ConnectionAdapters::DatabaseStatements.prepend(ArCache::ActiveRecord::ConnectionAdapters::DatabaseStatements)
 end
 # rubocop:enable Layout/LineLength

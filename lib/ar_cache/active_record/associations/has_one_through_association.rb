@@ -9,13 +9,14 @@ module ArCache
         private def find_target
           return super if ArCache.skip_cache?
           return super unless ArCache.cache_reflection?(reflection) do
-            ArCache::Query.new(owner.association(through_reflection.name).scope).exec_queries_cacheable? &&
-            ArCache::Query.new(source_reflection.active_record.new.association(source_reflection.name).scope).exec_queries_cacheable? # rubocop:disable Layout/LineLength
+            through_association = owner.association(through_reflection.name)
+            if ArCache::Query.new(through_association.scope).exec_queries_cacheable?(strict: false)
+              source_association = source_reflection.active_record.new.association(source_reflection.name)
+              ArCache::Query.new(source_association.scope).exec_queries_cacheable?(strict: false)
+            end
           end
 
-          violates_strict_loading = violates_strict_loading? if respond_to?(:violates_strict_loading?) # Rails 7
-          violates_strict_loading ||= owner.strict_loading? || reflection.strict_loading?
-          if violates_strict_loading && owner.validation_context.nil?
+          if strict_loading? && owner.validation_context.nil?
             ::ActiveRecord::Base.strict_loading_violation!(owner: owner.class, reflection: reflection)
           end
 

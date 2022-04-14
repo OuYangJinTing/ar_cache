@@ -4,10 +4,16 @@ module ArCache
   class Table
     include Marshal
 
-    singleton_class.attr_reader :all
+    singleton_class.attr_reader :all, :tables
 
     @lock = Mutex.new
     @all = []
+    @tables = {}
+
+    def self.[](table_name)
+      table_name.downcase!
+      @tables.fetch(table_name) { @tables[table_name] = new(table_name) }
+    end
 
     def self.new(table_name)
       @lock.synchronize do
@@ -22,36 +28,40 @@ module ArCache
       end
     end
 
-    attr_reader :name, :primary_key, :unique_indexes, :column_indexes, :column_names, :identity_cache_key, :short_sha1
+    attr_reader :name, :primary_key, :unique_indexes, :index_column_names, :column_names, :identity_cache_key, :short_sha1
 
     def initialize(table_name)
-      @name = table_name
-      options = ArCache::Configuration.get_table_options(@name)
+      @name = table_name.downcase
+      config = ArCache.table_config(@name)
 
       primary_keys = ::ActiveRecord::Base.connection.primary_keys(@name)
-      @primary_key = primary_keys.first if primary_keys.one? # ArCache does not support composite primary key.
-      @disabled = @primary_key.nil? ? true : options[:disabled] # ArCache depend on primary key.
-      @select_disabled = options[:select_disabled]
-
-      columns = ::ActiveRecord::Base.connection.schema_cache.columns(@name)
-      @unique_indexes = normalize_unique_indexes(options[:unique_indexes], columns).freeze
-      @column_indexes = @unique_indexes.flatten.uniq.freeze
+      validate_primary_keys(primary_keys)
+      @primary_key = primary_keys.first
+      @enabled = config[:enabled]
+      @select = config[:select]
+      @unique_indexes = normalize_unique_indexes(config[:unique_indexes]).freeze
+      @index_column_names = @unique_indexes.flatten.uniq.freeze
       @column_names = columns.map(&:name).freeze
-
       @identity_cache_key = "ArCache:#{@name}"
-      @short_sha1 = Digest::SHA1.hexdigest("#{@disabled}:#{columns.to_json}").first(7)
+      @short_sha1 = Digest::SHA1.hexdigest("#{@enabled}:#{columns.to_json}").first(7)
 
-      # For avoid to skip ArCache read cache, must delete cache when disable ArCache.
-      # For keep cache is fresh, must delete cache after modified the table.
-      ArCache.delete(@identity_cache_key) if disabled? || !cache_key_prefix.start_with?("#{@identity_cache_key}:#{@short_sha1}") # rubocop:disable Layout/LineLength
+      update_cache unless cache_key_prefix.start_with?("#{@identity_cache_key}:#{@short_sha1}")
+    end
+
+    def columns
+      ::ActiveRecord::Base.connection.schema_cache.columns(name)
+    end
+
+    def enabled?
+      @enabled
     end
 
     def disabled?
-      @disabled
+      !@enabled
     end
 
-    def select_disabled?
-      @select_disabled
+    def select?
+      @select
     end
 
     def cache_key_prefix
@@ -60,11 +70,10 @@ module ArCache
       ArCache.read(identity_cache_key, raw: true) || update_cache
     end
 
-    # In order to avoid cache avalanche, we must set cache_key_prefix never expired.
     def update_cache
       return '' if disabled?
 
-      key = "#{identity_cache_key}:#{short_sha1}:#{Time.now.to_f}"
+      key = "#{identity_cache_key}:#{short_sha1}:#{Process.clock_gettime(Process::CLOCK_REALTIME, :millisecond)}"
       ArCache.write(identity_cache_key, key, raw: true, expires_in: 20.years)
       key
     end
@@ -73,39 +82,48 @@ module ArCache
       "#{cache_key_prefix}:#{primary_key}=#{id}"
     end
 
-    def cache_key(where_values_hash, index, multi_values_key = nil, key_value = nil)
+    def cache_key(where_values_hash, index, array_key_value = nil)
       where_value = index.map do |column|
-        value = column == multi_values_key ? key_value : where_values_hash[column]
+        value = where_values_hash[column]
+        value = array_key_value if value.is_a?(Array)
         "#{column}=#{value}"
       end.sort.join('&')
 
       "#{cache_key_prefix}:#{where_value}"
     end
 
-    private def normalize_unique_indexes(indexes, columns)
-      indexes = indexes.empty? ? query_unique_indexes(columns) : validate_unique_indexes(indexes, columns)
+    private def normalize_unique_indexes(indexes)
+      indexes = indexes.empty? ? query_unique_indexes : validate_unique_indexes(indexes)
       (indexes - [primary_key]).sort_by(&:size).unshift([primary_key])
     end
 
-    private def query_unique_indexes(columns)
+    private def query_unique_indexes
       ::ActiveRecord::Base.connection.schema_cache.indexes(name).filter_map do |index|
         next unless index.unique
         next unless index.columns.is_a?(Array)
-
-        index.columns.each do |column|
-          next if columns.none? { |c| c.name == column }
+        next unless index.columns.all? do |column|
+          columns.find { |c| c.name == column }
         end
 
         index.columns
       end
     end
 
-    private def validate_unique_indexes(indexes, columns)
+    private def validate_unique_indexes(indexes)
       indexes.each do |attrs|
         attrs.each do |attr|
           column = columns.find { |c| c.name == attr }
-          raise ArgumentError, "The #{name} table not found #{attr} column, may set the wrong index" if column.nil?
+          next if column
+          raise IndexError, "The #{name} table cannot find the #{attr} column, you may have set the wrong index"
         end
+      end
+    end
+
+    private def validate_primary_keys(primary_keys)
+      if !primary_keys.one?
+        raise CompositePrimaryKey, "The ArCache does not support composite primary key. Please remove #{name} from tables_config"
+      elsif primary_keys.blank?
+        raise MissingPrimaryKey, "The #{name} table missing a primary key. Please remove #{name} from tables_config"
       end
     end
   end

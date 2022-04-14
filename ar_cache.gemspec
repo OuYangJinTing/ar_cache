@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name          = 'ar_cache'
   spec.version       = ArCache::VERSION
   spec.authors       = ['OuYangJinTing']
-  spec.email         = ['2729877005qq@gmail.com']
+  spec.email         = ['ouyangshi95@foxmail.com']
 
   spec.summary       = 'An modern cacheing library for ActiveRecord inspired by cache-money and second_level_cache.'
   spec.description   = spec.summary
